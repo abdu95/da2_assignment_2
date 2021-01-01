@@ -84,7 +84,8 @@ nrow(houses_raw)
 drops <- c("MS.SubClass","MS.Zoning", "Street", "Alley", "Lot.Shape")
 houses_raw <- houses_raw[ , !(names(houses_raw) %in% drops)]
 
-
+houses_raw$MS.SubClass.fact <- as.factor(houses_raw$MS.SubClass)
+houses_raw$MS.Zoning.fact <- as.factor(houses_raw$MS.Zoning)
 houses_raw$Street.fact <- as.factor(houses_raw$Street)
 houses_raw$Alley.fact <- as.factor(houses_raw$Alley)
 

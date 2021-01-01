@@ -19,6 +19,11 @@ This is the Assignment 2 for `Data Analysis 2`  and `Coding` course. The aim of 
  The data has 82 columns which include 23 nominal, 23 ordinal, 14 discrete, and 20 continuous variables (and 2 additional observation identifiers, Order and Parcel ID).
  
  
+ 
+ 
+ House price prediction can help the developer determine the selling price of a house and can help the customer to arrange the right time to purchase a house. There are three factors that influence the price of a house which include physical conditions, concept and location.
+ https://thesai.org/Downloads/Volume8No10/Paper_42-Modeling_House_Price_Prediction_using_Linear_Regression.pdf
+ 
  ```
  ##########
 # 1) Research question:
