@@ -12,17 +12,37 @@ output:
 
 ## Introduction
 
-This is the Assignment 2 for `Data Analysis 2`  and `Coding` course. The aim of this project is  to
+This is the Assignment 2 for `Data Analysis 2`  and `Coding` course. The aim of this project is  to predict house price based on its area and other variables. House price prediction can help the sellers of a house to determine the selling price of a house and can help the customer to arrange the right time to purchase a house.
 
-
- Data set was obtained from Kaggle. It contains information from the Ames Assessor’s Office used in computing assessed values for individual residential properties sold in Ames, IA from 2006 to 2010.
- The data has 82 columns which include 23 nominal, 23 ordinal, 14 discrete, and 20 continuous variables (and 2 additional observation identifiers, Order and Parcel ID).
- 
- 
- 
- 
+```
  House price prediction can help the developer determine the selling price of a house and can help the customer to arrange the right time to purchase a house. There are three factors that influence the price of a house which include physical conditions, concept and location.
  https://thesai.org/Downloads/Volume8No10/Paper_42-Modeling_House_Price_Prediction_using_Linear_Regression.pdf
+ ```
+ Data set was obtained from [Kaggle](https://www.kaggle.com/prevek18/ames-housing-dataset). It contains information from the Ames Assessor’s Office used in computing assessed values for individual residential properties sold in Ames, Iowa (IA) from 2006 to 2010.
+ This data was collected by Ames Assessor’s Office, one of the cities of Iowa. This data is representative only for this state.
+ Since this is administrative data that was collected by government office, there was no (or few) mistakes in entering data. Also, we have almost all necessary variables that matters for the house sale price (such as area, quality, rooms, etc).
+ Variables capture the house price and other conditions such as area of a house and garage, number of room, availability of fireplace, pool and others. I want to use these variables to predict house price given the certain house condition (area, rooms, house quality).
+ 
+ The data has 2930 observations. It consists of 82 columns which include 23 nominal, 23 ordinal, 14 discrete, and 20 continuous variables (and 2 additional observation identifiers, Order and Parcel ID). These variables describe the sales price of a house and its condition, such as area, quality, rooms, etc (see Appendix)
+
+## Data Cleaning 
+
+### Outliers
+
+When outcome variable SALE PRICE and parameter of interest GR LIV AREA (above ground living area square feet) were plotted, there were 5 observations with extreme values. When inspected, it was clear that two of these outliers have more than 5000 square feet area (which is extremely high) but nevertheless priced relatively appropriately. Also, three of them had Partial Sales that likely don’t represent actual
+market values. Therefore, I removed all houses with more than 4000 square feet from the data set to avoid these five unusual observations. 
+
+### Data Type for variables
+An appropriate format was given to categorical (numeric and ordinal) variables (see Appendix). 
+
+### Missing values
+Missing values in qualitative variables
+As it was described in original data description, in some categorical variables, NA didn't mean missing value. Therefore, corresponding name was assigned to the observations with such values (such as "No garage" or "No garage"). 
+Missing values in quantitative variables
+
+I decided to drop columns “Alley”, “Misc.Feature”, “Fence”, “Pool.Qu” and “Fireplace.Qu” because more than 90% (48% of Fireplace.Qu) of their values were missing. 
+Observations with NAs in all the garage related columns, were completed with the value “No garage” in case of nominal attribute.
+
  
  ```
  ##########
@@ -34,3 +54,15 @@ This is the Assignment 2 for `Data Analysis 2`  and `Coding` course. The aim of 
 #     - Intention: predict house price
  ```
  
+ 
+## Appendix
+
+### Variables
+
+Variables describe house area, garage area, availability of fireplace, pool and other conditions. To see a full list of explanation of variables, go to [Data Documentation](http://jse.amstat.org/v19n3/decock/DataDocumentation.txt)
+
+## Data Cleaning 
+clean_data.R script contains all the steps for data cleaning. Exact number of missing values in certain variables are also given as a comment
+
+### Data Type for variables
+An appropriate format was given to categorical (numeric and ordinal) variables. In order to make it easier for further use, categorical variables were converted from character (or numeric) vector into nominal and ordinal variables (using factor and ordered factor) in clean_data.R script

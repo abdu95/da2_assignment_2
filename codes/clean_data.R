@@ -9,6 +9,8 @@
 ##                   ##
 #######################
 
+rm(list = ls())
+
 install.packages("ggplot2")
 library(ggplot2)
 library(tidyverse)
@@ -124,6 +126,7 @@ df$Fireplace.Qu.fact <- factor(df$Fireplace.Qu, order = TRUE,
 
 # 157 houses has no garage
 sum(is.na(df$Garage.Type))
+# NA means	No Garage
 df$Garage.Type <- df$Garage.Type %>% replace_na("No Garage")
 df$Garage.Type.fact <- as.factor(df$Garage.Type)
 
@@ -163,7 +166,7 @@ df$Misc.Feature <- df$Misc.Feature %>% replace_na("None")
 df$Misc.Feature.fact <- as.factor(df$Misc.Feature)
 
 df$Sale.Type.fact <- as.factor(df$Sale.Type)
-df$Sale.Condition.fact <- as.factor(df$Sale.Type)
+df$Sale.Condition.fact <- as.factor(df$Sale.Condition) 
 
 drops <- c("MS.SubClass","MS.Zoning", "Street", "Alley", "Lot.Shape",
            "Land.Contour", "Utilities", "Lot.Config", "Land.Slope", 
@@ -179,64 +182,55 @@ drops <- c("MS.SubClass","MS.Zoning", "Street", "Alley", "Lot.Shape",
 
 df <- df[ , !(names(df) %in% drops)]
 
-
-
-# 490 missing values. do I need this variable? if yes, how to handle them?
-sum(is.na(df$Lot.Frontage))
-
-
-# 23 nominal, 23 ordinal variables 
-# 20 continuous variables, 14 discrete variables
-
-# Total Bsmt SF (Continuous)
-
-# Ordinal variables are example for 1-5 star hotels
-
-# 1st Flr SF (Continuous): First Floor square feet
-
-# 2nd Flr SF (Continuous)	: Second floor square feet
-# 
-# Low Qual Fin SF (Continuous): Low quality finished square feet (all floors)
-# 
-# Gr Liv Area (Continuous): Above grade (ground) living area square feet
-
-
-# df$Yr.Sold --> 2006 - 2010
-
+# Outliers
 ggplot(df, aes(Gr.Liv.Area, SalePrice)) +
   geom_point()
 
-ggplot(df, aes(Gr.Liv.Area, log(SalePrice))) +
-  geom_point()
-
-nrow(df)
 
 outliers <- df[df$Gr.Liv.Area > 4000,]
 df = df[df$Gr.Liv.Area < 4000,]
-nrow(df)
+
+summary(df)
+
+# handle NA ---------------------------------------------------------------
 
 
+na_columns <- colSums(sapply(df, is.na))
+na_columns
+summary(df)
+# 21 missing values
 
+sum(df$Alley.fact == "No alley access") 
+# 2727 observations have "No alley access" 93%
 
+sum(df$Misc.Feature.fact == "None")
+# 2820 observations have "None"  Miscellaneous feature 96%
+
+sum(df$Fence.fact == "No Fence")
+# 2354 observations have "No Fence"
+
+sum(df$Pool.QC.fact == "No Pool")
+# 2914 observations have "No Pool"
+
+sum(df$Fireplace.Qu.fact == "No Fireplace")
+# 1422 observations have "No Fireplace". 48%
+
+sum(df$Garage.Type.fact == "No Garage")
 
 table(is.na(df$Lot.Frontage))
-# NA means	No Garage
-sum(is.na(df$Garage.Type))
-df$Garage.Type <- df$Garage.Type %>% replace_na("No Garage")
-sum(is.na(df$Garage.Type))
 
+df$Pool.QC.fact
+drop_s <- c("Alley.fact", "Misc.Feature.fact", "Fence.fact","Pool.QC.fact", "Fireplace.Qu.fact")
+df <- df[ , !(names(df) %in% drop_s)]
+
+summary(df)
+# dataset <-  df[complete.cases(df), ]
+
+df$TotalArea <- df$Gr.Liv.Area + df$Total.Bsmt.SF
+
+#Fireplaces (Discrete): Number of fireplaces transform to 0/1
+df$HasFireplace<-ifelse(df$Fireplaces>0,1,0)
+#remodeled to 0/1
+df$Remodeled<-ifelse(df$Year.Remod.Add>df$Year.Built,1,0)
 
 write_csv(df, 'data/clean/Housing_clean.csv')
-
-
-
-
-
-qplot(log(houses_raw$SalePrice), geom="histogram") 
-
-
-what <- colSums(sapply(houses_raw, is.na))
-what
-# 26 missing values
-
-num_data <- select_if(df, is.numeric)
