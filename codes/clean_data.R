@@ -228,9 +228,4 @@ summary(df)
 
 df$TotalArea <- df$Gr.Liv.Area + df$Total.Bsmt.SF
 
-#Fireplaces (Discrete): Number of fireplaces transform to 0/1
-df$HasFireplace<-ifelse(df$Fireplaces>0,1,0)
-#remodeled to 0/1
-df$Remodeled<-ifelse(df$Year.Remod.Add>df$Year.Built,1,0)
-
 write_csv(df, 'data/clean/Housing_clean.csv')

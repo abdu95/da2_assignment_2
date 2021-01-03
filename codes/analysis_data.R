@@ -11,6 +11,14 @@
 
 rm(list = ls())
 
+install.packages("AER")
+library(AER)
+library(tidyverse)
+require(scales)
+library(lspline)
+library(estimatr)
+library(texreg)
+
 # read clean data
 df <- read.csv('data/clean/Housing_clean.csv')
 
@@ -23,11 +31,47 @@ df %>%
 
 summary( df )
 
-
+# SalePrice
 ggplot(df, aes(x = SalePrice)) +
   geom_histogram(fill='navyblue') +
   labs(x = "Sale price of houses")
 
+# TotalArea
+ggplot(df, aes(x = TotalArea)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Total Area of a house")
+
+# Fireplaces
+ggplot(df, aes(x = Fireplaces)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Fireplaces")
+
+#Fireplaces (Discrete). Number of fireplaces transform to dummy:  0/1
+df$HasFireplace<-ifelse(df$Fireplaces>0,1,0)
+#remodeled to 0/1
+df$Remodeled<-ifelse(df$Year.Remod.Add>df$Year.Built,1,0)
+
+
+ggplot(df, aes(x = HasFireplace)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Fireplaces")
+
+# Checking some scatter-plots:
+# Create a general function to check the pattern
+chck_sp <- function(x_var, x_lab){
+  ggplot( df , aes(x = x_var, y = SalePrice)) +
+    geom_point() +
+    geom_smooth(method="loess" , formula = y ~ x )+
+    labs(y = "Sale price of houses", x = x_lab) 
+}
+
+# Our main interest: total area:
+chck_sp(df$TotalArea, "Total Area of a house")
+
+
+
+reg1 <- lm_robust(SalePrice ~ TotalArea, data = df)
+summary(reg1)
 
 
 # The most obvious simple regression
@@ -66,3 +110,30 @@ sum(is.na(df$Sale.Type.fact))
 sum(is.na(df$Total.Bsmt.SF))
 
 missing <- df[is.na(df$Total.Bsmt.SF),]
+
+
+
+
+
+
+# 490 missing values. do I need this variable? if yes, how to handle them?
+sum(is.na(df$Lot.Frontage))
+table(is.na(df$Lot.Frontage))
+
+num_data <- select_if(df, is.numeric)
+
+
+# Total Bsmt SF (Continuous)
+
+# Ordinal variables are example for 1-5 star hotels
+
+# 1st Flr SF (Continuous): First Floor square feet
+# 2nd Flr SF (Continuous)	: Second floor square feet
+
+# Low Qual Fin SF (Continuous): Low quality finished square feet (all floors)
+# Gr Liv Area (Continuous): Above grade (ground) living area square feet
+
+# df$Yr.Sold --> 2006 - 2010
+
+
+qplot(log(df$SalePrice), geom="histogram") 
