@@ -38,10 +38,10 @@ An appropriate format was given to categorical (numeric and ordinal) variables (
 ### Missing values
 Missing values in qualitative variables
 As it was described in original data description, in some categorical variables, NA didn't mean missing value. Therefore, corresponding name was assigned to the observations with such values (such as "No garage" or "No garage"). 
-Missing values in quantitative variables
 
 I decided to drop columns “Alley”, “Misc.Feature”, “Fence”, “Pool.Qu” and “Fireplace.Qu” because more than 90% (48% of Fireplace.Qu) of their values were missing. 
 Observations with NAs in all the garage related columns, were completed with the value “No garage” in case of nominal attribute.
+I have not to used Street variable (Type of road access to property) as there are only 12 houses with Gravel and 2913 of them are Paved
 
  
  ```
