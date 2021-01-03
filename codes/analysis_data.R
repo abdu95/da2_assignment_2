@@ -18,12 +18,23 @@ require(scales)
 library(lspline)
 library(estimatr)
 library(texreg)
+library(corrplot)
 install.packages("varhandle")
 library(varhandle)
 
 
 # read clean data
 df <- read.csv('data/clean/Housing_clean.csv')
+
+
+# Re-iterated research question:
+#   Does a house with higher above ground living area have higher price from 2006 - 2010 in Ames (Iowa) ?
+#
+#####
+# Model setup
+# Outcome variable:      SalePrice: Sale price $$
+# Parameter of interest: Gr Liv Area: Above ground living area square feet
+
 
 df %>%
   keep(is.numeric) %>% 
@@ -34,15 +45,18 @@ df %>%
 
 summary( df )
 
+# Check the main parameter of interests and potential confounders:
+
 # SalePrice
 ggplot(df, aes(x = SalePrice)) +
   geom_histogram(fill='navyblue') +
   labs(x = "Sale price of houses")
 
-# TotalArea
-ggplot(df, aes(x = TotalArea)) +
+# Above ground living area 
+ggplot(df, aes(x = Gr.Liv.Area)) +
   geom_histogram(fill='navyblue') +
   labs(x = "Total Area of a house")
+
 
 # Fireplaces
 ggplot(df, aes(x = Fireplaces)) +
@@ -70,6 +84,9 @@ chck_sp <- function(x_var, x_lab){
 }
 
 # Our main interest: total area: # TotalArea = Total Bsmt SF + Gr Liv Area:
+summary(df$BsmtFin.Type.1.fact)
+
+
 
 # Total Bsmt SF - Total square feet of basement area. basement - below the ground floor
 # Gr Liv Area: Above ground living area square feet
@@ -87,7 +104,6 @@ chck_sp(df$Total.Bsmt.SF + df$X1st.Flr.SF + df$X2nd.Flr.SF,
 
 chck_sp(df$X1st.Flr.SF, "First Floor square feet")
 chck_sp(df$X2nd.Flr.SF, "Second Floor square feet")
-
 
 ggplot(df, aes(Total.Bsmt.SF + X1st.Flr.SF + X2nd.Flr.SF, SalePrice)) +
   geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
@@ -186,32 +202,76 @@ df$Bsmt.Qual.num <- as.numeric(factor(df$Bsmt.Qual.fact,
                   levels = c("No Garage","Po", "Fa", "TA", "Gd", "Ex")))
 
 df$MS.Zoning.num <- as.numeric(factor(df$MS.Zoning.fact))
-
-# dfs <- data.frame(df$MS.Zoning.fact, df$MS.Zoning.num)
 # RM 7 RL 6 RH 5 I 4  FV 3 C 2 A 1
 
-class(df$Overall.Qual.fact)
+df$Overall.Qual.num <- unfactor(as.factor(df$Overall.Qual.fact))
 
-TotalArea
-Lot.Area
-HasFireplace
-Garage.Area
-Total.Bsmt.SF
-Gr.Liv.Area
-Bsmt.Qual.fact (Bsmt.Qual.num)
-MS.Zoning.fact
-Overall.Qual.fact
-BsmtFin.Type.1.fact
-~~ Neighborhood.fact
-Year.Built - convex
-Year.Remod.Add
-Garage.Yr.Blt
-Garage.Cars
-TotRms.AbvGrd
-df$X1st.Flr.SF + df$X2nd.Flr.SF,
+# dfs <- data.frame(df$Overall.Qual.fact,df$Overall.Qual.num)
 
+
+df$BsmtFin.Type.1.num <- 
+  as.numeric(factor(df$BsmtFin.Type.1.fact,
+                    levels = c("No Basement", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ")))
+# GLQ 7 ALQ 6 BLQ 5 Rec 4 LwQ 3 Unf 2 No Basement 1
+
+# dfs <- data.frame(df$BsmtFin.Type.1.fact, df$BsmtFin.Type.1.num)
+
+
+# TotalArea
+# Lot.Area
+# HasFireplace
+# Garage.Area
+# Total.Bsmt.SF
+# Gr.Liv.Area
+# Bsmt.Qual.fact (Bsmt.Qual.num)
+# MS.Zoning.fact (MS.Zoning.num)
+# Overall.Qual.fact (Overall.Qual.num)
+# BsmtFin.Type.1.fact (BsmtFin.Type.1.num )
+# ~~ Neighborhood.fact
+# Year.Built - convex
+# Year.Remod.Add
+# Garage.Yr.Blt
+# Garage.Cars
+# TotRms.AbvGrd
+# df$X1st.Flr.SF + df$X2nd.Flr.SF
+
+df$TwoFloorArea <- df$X1st.Flr.SF + df$X2nd.Flr.SF
+chck_sp(df$TwoFloorArea, "Area of two floors")
+
+selected_var_df <- data.frame("SalePrice" = df$SalePrice, "TotalArea" = df$TotalArea, 
+                              "Lot.Area" = df$Lot.Area, "HasFireplace" = df$HasFireplace, 
+                              "Garage.Area" = df$Garage.Area, "Total.Bsmt.SF" = df$Total.Bsmt.SF, 
+                              "Liv.Area" = df$Gr.Liv.Area, "Bsmt.Qual" = df$Bsmt.Qual.num, 
+                              "MS.Zoning" = df$MS.Zoning.num, "Overall.Qual" = df$Overall.Qual.num, 
+                              "BsmtFin.Type.1" = df$BsmtFin.Type.1.num, "Year.Built" = df$Year.Built, 
+                              "Year.Remod.Add" = df$Year.Remod.Add, "Garage.Yr.Blt" = df$Garage.Yr.Blt, 
+                              "Garage.Cars" = df$Garage.Cars, "TotRms.AbvGrd" = df$TotRms.AbvGrd, "TwoFloorArea" = df$TwoFloorArea) 
 
 # Now we have an idea how to include these variables into our regression
+
+corTable <- cor(selected_var_df, use = "complete.obs")
+
+# see correlation 
+corrplot(cor(selected_var_df, use = "complete.obs"),method='e')
+
+# Check for highly correlated values:
+sum( abs(corTable) >= 0.8 & corTable != 1 ) / 2
+
+# Find the correlations which are higher than 0.8
+id_cr <- which( abs(corTable) >= 0.8 & corTable != 1 )
+pair_names <- expand.grid( variable.names(selected_var_df) , variable.names(selected_var_df) )
+
+# Get the pairs:
+high_corr <- pair_names[ id_cr , ]
+high_corr <- mutate( high_corr , corr_val = corTable[ id_cr ] )
+
+# highly correlated - confounder (leads to multicollinearity)
+high_corr
+
+
+SalePrice: Lot.Area, HasFireplace, Garage.Area, Total.Bsmt.SF, 
+Liv.Area, Bsmt.Qual, MS.Zoning, BsmtFin.Type.1, Year.Built, 
+Year.Remod.Add, Garage.Yr.Blt, Garage.Cars,  TotRms.AbvGrd, TwoFloorArea,
 
 SalePrice = 7851 + 1.72 Lot Area + 41.2 Total Bsmt SF + 40.8 Gr Liv Area
 + 20952 Garage Cars + 8379 FireYN
