@@ -4,33 +4,73 @@ subtitle: 'Assignment 2 for Data Analysis 2'
 author: 'Abduvosid Malikov'
 geometry: "left=1cm,right=1cm,top=0.5cm,bottom=1.5cm"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 
-## Introduction
+# Introduction
 
 This is the Assignment 2 for `Data Analysis 2`  and `Coding` course. The aim of this project is  to predict house price based on its area and other variables. House price prediction can help the sellers of a house to determine the selling price of a house and can help the customer to arrange the right time to purchase a house.
 
-```
- House price prediction can help the developer determine the selling price of a house and can help the customer to arrange the right time to purchase a house. There are three factors that influence the price of a house which include physical conditions, concept and location.
- https://thesai.org/Downloads/Volume8No10/Paper_42-Modeling_House_Price_Prediction_using_Linear_Regression.pdf
- ```
+# Data collection
+
  Data set was obtained from [Kaggle](https://www.kaggle.com/prevek18/ames-housing-dataset). It contains information from the Ames Assessor’s Office used in computing assessed values for individual residential properties sold in Ames, Iowa (IA) from 2006 to 2010.
- This data was collected by Ames Assessor’s Office, one of the cities of Iowa. This data is representative only for this state.
- Since this is administrative data that was collected by government office, there was no (or few) mistakes in entering data. Also, we have almost all necessary variables that matters for the house sale price (such as area, quality, rooms, etc).
- Variables capture the house price and other conditions such as area of a house and garage, number of room, availability of fireplace, pool and others. I want to use these variables to predict house price given the certain house condition (area, rooms, house quality).
+ This data was collected by Ames Assessor’s Office, one of the cities of Iowa. This data is representative only for this state. Since this is administrative data that was collected by government office, we assume that there was no (or few) mistakes in entering data. Also, we have almost all necessary variables that matters for the house sale price (such as area, quality, rooms, etc).
  
- The data has 2930 observations. It consists of 82 columns which include 23 nominal, 23 ordinal, 14 discrete, and 20 continuous variables (and 2 additional observation identifiers, Order and Parcel ID). These variables describe the sales price of a house and its condition, such as area, quality, rooms, etc (see Appendix)
+### Data descriptives
+ Variables capture the house price and other conditions such as area of a house and garage, number of rooms, availability of fireplace, pool and others. I want to use these variables to predict house price given the certain house condition (area, rooms, fireplaces).
+ The data has 2930 observations. It consists of 82 columns which include 23 nominal, 23 ordinal, 14 discrete, and 20 continuous variables (and 2 additional observation identifiers, Order and Parcel ID). These variables describe the sales price of a house and its condition, such as area, quality, rooms, etc.
+ As an outcome variable, we have chosen **SalePrice** (in US dollars) variable. The main parameter of interest (explanatory variable) is **Above Ground Area** (in square feet) of a house. Full summary statistics and distributions of explanatory variables are given in Appendix.
+
+```{r setup, include=FALSE}
+# install.packages("AER")
+library(AER)
+library(tidyverse)
+require(scales)
+library(lspline)
+library(estimatr)
+library(texreg)
+library(corrplot)
+# install.packages("varhandle")
+library(varhandle)
+library(kableExtra)
+# install.packages("e1071")
+library(e1071)
+library(readr)
+```
+
+```{r,echo=F, message=FALSE, warning=FALSE}
+# read clean data
+df <- read.csv('../data/clean/Housing_clean.csv')
+
+
+```
+The histogram below shows the house sale prices. We can see that on average, most of the houses are priced from 100,000 to 200,000 dollars. It's skewed to the right, meaning that only few houses were priced extremely high. 
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of house sale prices"}
+
+# Check the main parameter of interests and potential confounders:
+
+# SalePrice
+ggplot(df, aes(x = SalePrice)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Sale price of houses")
+
+```
 
 ## Data Cleaning 
 
 ### Outliers
 
 When outcome variable SALE PRICE and parameter of interest GR LIV AREA (above ground living area square feet) were plotted, there were 5 observations with extreme values. When inspected, it was clear that two of these outliers have more than 5000 square feet area (which is extremely high) but nevertheless priced relatively appropriately. Also, three of them had Partial Sales that likely don’t represent actual
-market values. Therefore, I removed all houses with more than 4000 square feet from the data set to avoid these five unusual observations. 
+market values. Therefore, I removed all houses with more than 4000 square feet from the data set to avoid these five unusual observations (Appendix, Figure 4. 
+
+Therefore, re-iterated research question is the following: 
+**Does a house with higher above ground living area (considering it's less than 4000 square feet) have higher price from 2006 - 2010 in Ames (Iowa) ?**
+
 
 ### Data Type for variables
 An appropriate format was given to categorical (numeric and ordinal) variables (see Appendix). 
@@ -43,6 +83,34 @@ I decided to drop columns “Alley”, “Misc.Feature”, “Fence”, “Pool.
 Observations with NAs in all the garage related columns, were completed with the value “No garage” in case of nominal attribute.
 I have not to used Street variable (Type of road access to property) as there are only 12 houses with Gravel and 2913 of them are Paved
 
+# Pattern of association
+
+With the help of scatter-plots and LOESS method, we want to check the pattern of association between *y* and each potential *x* variables. 
+
+First, we see the plot of Sale Price and Above Ground Area since it's our main parameter of interest. The plot below shows that there is a strong linear relationship between these two variables. 
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Above Ground Area of houses"}
+
+# Create a general function to check the pattern
+chck_sp <- function(x_var, x_lab){
+  ggplot( df , aes(x = x_var, y = SalePrice)) +
+    geom_point() +
+    geom_smooth(method="loess" , formula = y ~ x )+
+    labs(y = "Sale price of houses", x = x_lab) 
+}
+
+chck_sp(df$Gr.Liv.Area, " Above ground living area square feet")  
+
+```
+ 
+# Residual Analysis
+
+For these 5 countries in table 2(see Appendix), the model overestimated life expectancy, as the actual value is smaller than the predicted value; in another word, these countries have short life span than average. The explanation could be extreme weather(temperature too hot or too cold) or worsened social safety conditions.
+
+For these 5 countries in table 3(see Appendix), the model underestimated life expectancy, as the actual value is larger than the predicted value; in another word, these countries have longer life span than average. The explanation could be healthy(Mediterranean and Eastern Asian diet) or complete social security administration.
+
+Also, we check the y and y_hat plot(see Appendix) to examine the model fit. We can see that most scatters fall aside the line, indicating a good fit of the model. 
  
  ```
  ##########
@@ -55,14 +123,272 @@ I have not to used Street variable (Type of road access to property) as there ar
  ```
  
  
-## Appendix
+# Appendix
 
 ### Variables
 
 Variables describe house area, garage area, availability of fireplace, pool and other conditions. To see a full list of explanation of variables, go to [Data Documentation](http://jse.amstat.org/v19n3/decock/DataDocumentation.txt)
 
+### Data descriptives
+
+```{r,echo=F, message=FALSE, warning=FALSE}
+
+#Fireplaces (Discrete). Number of fireplaces transform to dummy:  0/1
+df$HasFireplace<-ifelse(df$Fireplaces>0,1,0)
+#remodeled to 0/1
+df$Remodeled<-ifelse(df$Year.Remod.Add>df$Year.Built,1,0)
+
+
+
+
+
+df$Bsmt.Qual.unfact <- unfactor(df$Bsmt.Qual.fact)
+
+
+df$Bsmt.Qual.num <- as.numeric(factor(df$Bsmt.Qual.fact,
+                  levels = c("No Basement","Po", "Fa", "TA", "Gd", "Ex")))
+
+df$MS.Zoning.num <- as.numeric(factor(df$MS.Zoning.fact))
+# RM 7 RL 6 RH 5 I 4  FV 3 C 2 A 1
+
+df$Overall.Qual.num <- unfactor(as.factor(df$Overall.Qual.fact))
+
+df$BsmtFin.Type.1.num <- 
+  as.numeric(factor(df$BsmtFin.Type.1.fact,
+                    levels = c("No Basement", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ")))
+# GLQ 7 ALQ 6 BLQ 5 Rec 4 LwQ 3 Unf 2 No Basement 1
+
+get_statistics <- function(x_var){ summarise(df,
+                                             n        = sum( !is.na(x_var) ),
+                                             Min      = min(x_var),
+                                             '1st IQR' = round(quantile(x_var, 0.25,na.rm =  T),2),
+                                             Median   = median(x_var),
+                                             '3rd IQR' = round(quantile(x_var,0.75, na.rm = T),2),
+                                             Max      = max(x_var),
+                                             Mean     = round(mean(x_var),digits = 2),
+                                             Std.      = round(sd(x_var),digits = 2),
+                                             Skew     = round(skewness(x_var),digits = 2)) }
+
+s_sale_price <- get_statistics(df$SalePrice)
+s_gr_liv_area <- get_statistics(df$Gr.Liv.Area)
+s_basement_area <- get_statistics(df$Total.Bsmt.SF)
+s_fireplaces <- get_statistics(df$HasFireplace)
+s_lot_area <- get_statistics(df$Lot.Area)
+s_garage_area <- get_statistics(df$Garage.Area)
+
+SummStats <- s_sale_price %>% add_row(s_gr_liv_area) %>% add_row(s_basement_area) %>% add_row(s_fireplaces) %>% add_row(s_lot_area) %>% add_row(s_garage_area) %>% 
+  add_column(c('Sale Price','Above Ground Living Area', 'Basement Area', 'Fireplaces',
+               'Lot Area', 'Garage Area'))
+names(SummStats)[10] <- 'Name' 
+SummStats %>% relocate(Name) %>% kable(caption = 'Summary Statistics of Variables ')
+
+```
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of Above Ground Area of a house"}
+
+# Above ground living area 
+ggplot(df, aes(x = Gr.Liv.Area)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Above Ground Area of a house")
+```
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of houses with and without fireplace"}
+ggplot(df, aes(x = HasFireplace)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Fireplaces")
+```
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of houses with 0, 1, 2, 3 and 4 fireplaces"}
+
+# Fireplaces
+ggplot(df, aes(x = Fireplaces)) +
+  geom_histogram(fill='navyblue') +
+  labs(x = "Fireplaces")
+```
+
 ## Data Cleaning 
 clean_data.R script contains all the steps for data cleaning. Exact number of missing values in certain variables are also given as a comment
 
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of houses more than 4000 square feet Above Ground Area"}
+df_r <- read.csv('../data/raw/Housing_raw.csv')
+# Outliers
+ggplot(df_r, aes(Gr.Liv.Area, SalePrice)) +
+  geom_point()
+
+
+```
+
 ### Data Type for variables
 An appropriate format was given to categorical (numeric and ordinal) variables. In order to make it easier for further use, categorical variables were converted from character (or numeric) vector into nominal and ordinal variables (using factor and ordered factor) in clean_data.R script
+
+
+# Pattern of association
+
+Plot shows bunch of dots near 0. Probably the Sale Price and Lot Area variables are not correlated.
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price and Lot Area"}
+chck_sp(df$Lot.Area, "Lot Area")
+```
+
+Ln(Sale Price) - Ln(Lot Area).  Probably linear spline, with knots at 8 and 10
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Ln(Sale Price) - Ln(Lot Area)."}
+
+ggplot( df , aes(x = log(Lot.Area), y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method="loess" , formula = y ~ x )+
+  labs(y = "Sale price of houses", x = "Lot Area") 
+```
+
+The more regular shape house has, the higher the price. But some Irregular houses has same price as Regular houses. 
+
+Reg	Regular	
+
+IR1	Slightly irregular
+
+IR2	Moderately Irregular
+
+IR3	Irregular
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Lot Shape"}
+chck_sp(df$Lot.Shape.fact, "General shape of property")
+```
+
+
+Houses with 1 or more fireplaces have higher price
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Fireplace"}
+chck_sp(df$HasFireplace, "Has Fireplace")
+```
+
+
+Almost positive linear, but some outliers at the end causing the line to curve. Seems Garage Area variable is important
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Garage Area"}
+chck_sp(df$Garage.Area, "Garage Area")
+```
+
+There is a linear relationship between Sale Price and Total square feet of basement area
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Basement area"}
+chck_sp(df$Total.Bsmt.SF, "Total square feet of basement area")
+```
+
+On average, houses with more garage cars have higher price
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.cap = "Plot of Sale Price - Garage.Cars"}
+chck_sp(df$Garage.Cars, "Size of garage in car capacity")
+```
+
+
+Near Flat/Level	and Hillside houses have higher prices.
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Land.Contour"}
+chck_sp(df$Land.Contour.fact, "Land Contour")
+```
+
+
+There are 2922 houses with All Public *Utilities*. Since we don't have much observations with different utilities, it was decided not to check the pattern of association and not to include this variable in the model. 
+
+
+
+Cul-de-sac and Inside lot has higher prices
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Land Configuration"}
+chck_sp(df$Lot.Config.fact, " Lot configuration")
+```
+
+
+Houses with *Gentle slope* and *Moderate Slope* have higher prices
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.cap = "Plot of Sale Price - Land Slope"}
+chck_sp(df$Land.Slope.fact, "Slope")
+```
+
+
+Houses from Northridge, Northridge Heights, and Stone Brook neighborhoods have relatively high prices
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Neighborhood"}
+ggplot( df , aes(x = Neighborhood.fact, y = SalePrice)) +
+  geom_point() +
+  geom_smooth(method="loess" , formula = y ~ x )+
+  labs(y = "Sale price of houses", x = "Neighborhood") + 
+  theme(axis.text.x = element_text(angle = 90))  
+```
+
+
+Houses with Normal and "Adjacent to postive off-site feature" conditions have relatively high prices
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - House Condition"}
+chck_sp(df$Condition.1.fact, "Condition 1")
+```
+
+
+Most of the houses are Single-family Detached. Single-family Detached and Townhouse End Unit houses have relatively high prices
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Type of building"}
+chck_sp(df$Bldg.Type.fact, "Type of building")
+```
+
+
+Most of the houses are One story and Two story. One story and Two story houses have relatively high prices
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Style of house"}
+chck_sp(df$House.Style.fact, "Style of house")
+```
+
+
+Higher rating - higher sale price. But some houses has quality 6 but has same price as quality 2
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  House rating"}
+chck_sp(df$Overall.Qual.fact, "Rating of overall material and finish of the house")
+```
+
+
+Most of the houses have Average (5) condition. Average conditioned houses have relatively high prices
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  House condition "}
+chck_sp(df$Overall.Cond.fact, "Rating of the overall condition of the house")
+```
+
+
+The newer the house (the later is the year built) -  the higher the price. But some houses that are built before 1900 were priced realtively high. There is an upward trend
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  Year Built "}
+chck_sp(df$Year.Built, "Year Built")
+```
+
+
+
+I also checked the pattern of association between Sale Price and Total Area of a house. TotalArea = Total Basement Area + Above Ground Area
+
+*Total Bsmt SF* - Total square feet of basement area. (basement - below the ground floor)
+
+*Gr Liv Area* - Above ground living area square feet
+
+
+The total square footage model indicates some possible curvature (convex) which could be better interpreted with quadratic variables.
+
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  Total Area"}
+chck_sp(df$TotalArea, "Total Area of a house")
+```
+
+
+Total basement area and Above ground area with Sale Condition
+
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  Total Area with Sale Condition"}
+ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
+  geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
+  labs(x = "Total basement area + Above ground area")
+```
+
+
+

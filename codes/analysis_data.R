@@ -22,19 +22,13 @@ library(corrplot)
 install.packages("varhandle")
 library(varhandle)
 library(kableExtra)
+install.packages("e1071")
+library(e1071)
+library(readr)
 
 
 # read clean data
 df <- read.csv('data/clean/Housing_clean.csv')
-
-
-# Re-iterated research question:
-#   Does a house with higher above ground living area have higher price from 2006 - 2010 in Ames (Iowa) ?
-#
-#####
-# Model setup
-# Outcome variable:      SalePrice: Sale price $$
-# Parameter of interest: Gr Liv Area: Above ground living area square feet
 
 
 df %>%
@@ -45,6 +39,7 @@ df %>%
   geom_histogram()
 
 summary( df )
+
 
 # Check the main parameter of interests and potential confounders:
 
@@ -75,6 +70,28 @@ ggplot(df, aes(x = HasFireplace)) +
   geom_histogram(fill='navyblue') +
   labs(x = "Fireplaces")
 
+
+get_statistics <- function(x_var){ summarise(df,
+                                             n        = sum( !is.na(x_var) ),
+                                             Min      = min(x_var),
+                                             '1st IQR' = round(quantile(x_var, 0.25,na.rm = T),2),
+                                             Median   = median(x_var),
+                                             '3rd IQR' = round(quantile(x_var,0.75, na.rm = T),2),
+                                             Max      = max(x_var),
+                                             Mean     = round(mean(x_var),digits = 2),
+                                             Std.      = round(sd(x_var),digits = 2),
+                                             Skew     = round(skewness(x_var),digits = 2)) }
+
+s_sale_price <- get_statistics(df$SalePrice)
+s_gr_liv_area <- get_statistics(df$Gr.Liv.Area)
+s_basement_area <- get_statistics(df$Total.Bsmt.SF)
+s_fireplaces <- get_statistics(df$HasFireplace)
+s_lot_area <- get_statistics(df$Lot.Area)
+s_garage_area <- get_statistics(df$Garage.Area)
+
+
+
+
 # Checking some scatter-plots:
 # Create a general function to check the pattern
 chck_sp <- function(x_var, x_lab){
@@ -84,28 +101,11 @@ chck_sp <- function(x_var, x_lab){
     labs(y = "Sale price of houses", x = x_lab) 
 }
 
-# Our main interest - total area: # TotalArea = Total Bsmt SF + Gr Liv Area:
-
-# Total Bsmt SF - Total square feet of basement area. basement - below the ground floor
-# Gr Liv Area: Above ground living area square feet
-ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
-  geom_point()
-
-chck_sp(df$TotalArea, "Total Area of a house")
-# The total square footage model indicates some possible curvature (convex) 
-# which could be better interpreted with quadratic variables
-
-chck_sp(df$Total.Bsmt.SF + df$Gr.Liv.Area, 
-        "Total basement area + Above ground area")
-# also convex
-
-ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
-  geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
-  labs(x = "Total basement area + Above ground area")
+# Our main interest - Gr Liv Area:
+chck_sp(df$Gr.Liv.Area, " Above ground living area square feet")  
+# strong (straight) linear relationship
 
 
-chck_sp(df$X1st.Flr.SF, "First Floor square feet")
-chck_sp(df$X2nd.Flr.SF, "Second Floor square feet")
 
 chck_sp(df$Lot.Area, "Lot Area")
 # bunch of dots near 0
@@ -134,16 +134,12 @@ chck_sp(df$Garage.Area, "Garage Area")
 chck_sp(df$Total.Bsmt.SF, "Total square feet of basement area")
 # linear relationship
 
-chck_sp(df$Gr.Liv.Area, " Above ground living area square feet")  
-# strong (straight) linear relationship
-
 chck_sp(df$Garage.Cars, "Size of garage in car capacity")
 # houses with more garage cars have higher price
 
 chck_sp(df$Land.Contour.fact, "Land Contour")
 # Near Flat/Level	and Hillside houses have higher prices
 
-# "Utilities" - 2922 houses has AllPub
 
 chck_sp(df$Lot.Config.fact, " Lot configuration")
 # Cul-de-sac and Inside lot has higher prices
@@ -159,7 +155,7 @@ ggplot( df , aes(x = Neighborhood.fact, y = SalePrice)) +
 # Houses from Northridge, Northridge Heights, and Stone Brook neighborhoods have relatively high prices
 
 chck_sp(df$Condition.1.fact, "Condition 1")
-# Houese with Normal and "Adjacent to postive off-site feature" conditions have relatively high prices
+# Houses with Normal and "Adjacent to postive off-site feature" conditions have relatively high prices
 
 chck_sp(df$Condition.2.fact, "Condition 2")
 
@@ -196,10 +192,32 @@ chck_sp(df$MS.Zoning.fact, "General zoning classification of the sale.")
 chck_sp(df$Kitchen.AbvGr, "Kitchens above grade")
 chck_sp(df$Garage.Yr.Blt, "Year garage was built")
 
-str(df$Bsmt.Qual.fact)
+
+
+# total area: # TotalArea = Total Bsmt SF + Gr Liv Area:
+
+# Total Bsmt SF - Total square feet of basement area. basement - below the ground floor
+# Gr Liv Area: Above ground living area square feet
+ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
+  geom_point()
+
+chck_sp(df$TotalArea, "Total Area of a house")
+# The total square footage model indicates some possible curvature (convex) 
+# which could be better interpreted with quadratic variables
+
+chck_sp(df$Total.Bsmt.SF + df$Gr.Liv.Area, 
+        "Total basement area + Above ground area")
+# also convex
+
+ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
+  geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
+  labs(x = "Total basement area + Above ground area")
+
+
+
+
 df$Bsmt.Qual.unfact <- unfactor(df$Bsmt.Qual.fact)
-class(df$Bsmt.Qual.unfact)
-unique(df$Bsmt.Qual.fact)
+
 
 df$Bsmt.Qual.num <- as.numeric(factor(df$Bsmt.Qual.fact,
                   levels = c("No Basement","Po", "Fa", "TA", "Gd", "Ex")))
@@ -210,7 +228,6 @@ df$MS.Zoning.num <- as.numeric(factor(df$MS.Zoning.fact))
 df$Overall.Qual.num <- unfactor(as.factor(df$Overall.Qual.fact))
 
 # dfs <- data.frame(df$Overall.Qual.fact,df$Overall.Qual.num)
-
 
 df$BsmtFin.Type.1.num <- 
   as.numeric(factor(df$BsmtFin.Type.1.fact,
@@ -468,15 +485,24 @@ AIC(reg23_lm, reg31_lm)
 df$reg23_res <- df$SalePrice - df$y_hat
 
 # Find houses with largest negative errors
-df %>% top_n( -3 , reg23_res ) %>% 
-  select(PID, SalePrice, y_hat, reg23_res) %>% kable(caption = "List of Houses with largest negative errors, Top 3")
+df %>% top_n( -5 , reg23_res ) %>% 
+  select(PID, SalePrice, y_hat, reg23_res) %>% kable(caption = "List of Houses with largest negative errors, Top 5")
 
-```
-
-```{r, echo=F, message=FALSE, warning=FALSE}
 # Find houses with largest positive errors
-df %>% top_n( 3 , reg4_res ) %>% 
-  select( Country, life_exp,exp_pred, reg4_res) %>%  kable(caption = "List of Coutnries with largest positive errors, Top 3")
+df %>% top_n( 5 , reg23_res ) %>% 
+  select(PID, SalePrice, y_hat, reg23_res) %>%  kable(caption = "List of Houses with largest positive errors, Top 5")
+
+# Limitations
+# The burden for our models are external validity. 
+# The data is limited to Ames city, state Iowa from 2006 to 2010, and our prediction model was conducted using test data from Ames, Iowa. 
+# Applying these models to other regions, like Washington (or other US state), to commercial markets, or to time periods before 2006 or after 2010. 
+# Additionally, the financial crisis of 2008 may had its effect to our models that made them specific to this time period and location. 
+# The further work may compare Ames, Iowa to other housing markets or develop a model based off housing data from a larger coverage or at a different country. 
+# This difficulty in developing these datasets is consistency in variables across regions. 
+# For example, in some countries people may prefer bigger (or smaller) houses, or houses with (or without) fireplaces.
+# 
+
+
 
 
 
