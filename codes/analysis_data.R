@@ -21,6 +21,7 @@ library(texreg)
 library(corrplot)
 install.packages("varhandle")
 library(varhandle)
+library(kableExtra)
 
 
 # read clean data
@@ -408,8 +409,74 @@ summary(reg4)
 
 ##
 # Summarize our findings:
-data_out <- ""
+data_out <- "out/"
 
+# reg1 0.51 reg13 0.42 reg23 0.68 reg31 0.57  reg32 0.71
+reg4$fitted.values
+
+htmlreg( list(reg1 , reg13 , reg23 , reg31, reg32),
+         type = 'html',
+         custom.model.names = c("(1) SalePrice - Above ground area","(2) SalePrice - Garage Area",
+                                "(3) SalePrice - Basement and Above ground area", "(4) SalePrice - Above ground are interacted with HasFireplace", 
+                                "(5) SalePrice - Basement and Above ground are interacted with HasFireplace "),
+         caption = "Modelling Sale Price of houses",
+         file = paste0( data_out ,'model_comparison.html'), include.ci = FALSE)
+
+
+# calculate some additional important fit measures:
+#
+# 1) y_hat-y plot - use reg23 - not handling missing values properly...
+df <- mutate( df , y_hat = reg23$fitted.values )
+
+# Predict is more general and can handle missing values...
+df <- mutate( df , y_hat = predict( reg23 , df ) )
+
+#y_hat-y plot
+ggplot( data = df ) +
+  geom_point (aes( x = y_hat , y = SalePrice ) ,  color="red")+
+  geom_line( aes( x = SalePrice , y = SalePrice ) , color = "navyblue" , size = 1.5 )+
+  labs( x = "Predicted sale prices", y = "Actual sale prices")
+
+
+# Does fireplace interaction increase the prediction?
+reg23_lm <- lm(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, 
+               data = subset(df,complete.cases(df)))
+summary(reg23_lm)
+
+reg31_lm <- lm(SalePrice ~ Gr.Liv.Area + HasFireplace + 
+                 Gr.Liv.Area * HasFireplace, data = subset(df,complete.cases(df)))
+summary( reg31_lm )
+summary(reg31)
+
+BIC(reg23_lm, reg31_lm)
+AIC(reg23_lm, reg31_lm)
+
+# a lower BIC means that a model is considered to be more likely to be the true model
+
+
+
+# a varibale is significant
+# # p value of variable is significant (p < 0.05), 
+# Our first model include all variables, in which we check the p value of all variables and eliminate one with p value larger pre-set significant level(5%).
+
+
+# Residuals 
+
+# y_hat predicted y values from the model
+
+# Calculate the errors of the model
+df$reg23_res <- df$SalePrice - df$y_hat
+
+# Find houses with largest negative errors
+df %>% top_n( -3 , reg23_res ) %>% 
+  select(PID, SalePrice, y_hat, reg23_res) %>% kable(caption = "List of Houses with largest negative errors, Top 3")
+
+```
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+# Find houses with largest positive errors
+df %>% top_n( 3 , reg4_res ) %>% 
+  select( Country, life_exp,exp_pred, reg4_res) %>%  kable(caption = "List of Coutnries with largest positive errors, Top 3")
 
 
 
