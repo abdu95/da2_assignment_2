@@ -83,10 +83,7 @@ chck_sp <- function(x_var, x_lab){
     labs(y = "Sale price of houses", x = x_lab) 
 }
 
-# Our main interest: total area: # TotalArea = Total Bsmt SF + Gr Liv Area:
-summary(df$BsmtFin.Type.1.fact)
-
-
+# Our main interest - total area: # TotalArea = Total Bsmt SF + Gr Liv Area:
 
 # Total Bsmt SF - Total square feet of basement area. basement - below the ground floor
 # Gr Liv Area: Above ground living area square feet
@@ -97,22 +94,27 @@ chck_sp(df$TotalArea, "Total Area of a house")
 # The total square footage model indicates some possible curvature (convex) 
 # which could be better interpreted with quadratic variables
 
-
-chck_sp(df$Total.Bsmt.SF + df$X1st.Flr.SF + df$X2nd.Flr.SF, 
-        "Total basement area + 1st floor area + 2nd floor area")
+chck_sp(df$Total.Bsmt.SF + df$Gr.Liv.Area, 
+        "Total basement area + Above ground area")
 # also convex
+
+ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
+  geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
+  labs(x = "Total basement area + Above ground area")
+
 
 chck_sp(df$X1st.Flr.SF, "First Floor square feet")
 chck_sp(df$X2nd.Flr.SF, "Second Floor square feet")
 
-ggplot(df, aes(Total.Bsmt.SF + X1st.Flr.SF + X2nd.Flr.SF, SalePrice)) +
-  geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
-  labs(x = "Total basement area + 1st floor area + 2nd floor area")
-
-
 chck_sp(df$Lot.Area, "Lot Area")
 # bunch of dots near 0
 # probably not correlated
+
+ggplot( df , aes(x = log(Lot.Area), y = log(SalePrice))) +
+  geom_point() +
+  geom_smooth(method="loess" , formula = y ~ x )+
+  labs(y = "Sale price of houses", x = "Lot Area") 
+# probably linear spline, with knots at 8 and 10
 
 chck_sp(df$Lot.Shape.fact, "General shape of property")
 # The more regular shape house has, the higher the price 
@@ -199,7 +201,7 @@ class(df$Bsmt.Qual.unfact)
 unique(df$Bsmt.Qual.fact)
 
 df$Bsmt.Qual.num <- as.numeric(factor(df$Bsmt.Qual.fact,
-                  levels = c("No Garage","Po", "Fa", "TA", "Gd", "Ex")))
+                  levels = c("No Basement","Po", "Fa", "TA", "Gd", "Ex")))
 
 df$MS.Zoning.num <- as.numeric(factor(df$MS.Zoning.fact))
 # RM 7 RL 6 RH 5 I 4  FV 3 C 2 A 1
@@ -216,38 +218,18 @@ df$BsmtFin.Type.1.num <-
 
 # dfs <- data.frame(df$BsmtFin.Type.1.fact, df$BsmtFin.Type.1.num)
 
-
-# TotalArea
-# Lot.Area
-# HasFireplace
-# Garage.Area
-# Total.Bsmt.SF
-# Gr.Liv.Area
-# Bsmt.Qual.fact (Bsmt.Qual.num)
-# MS.Zoning.fact (MS.Zoning.num)
-# Overall.Qual.fact (Overall.Qual.num)
-# BsmtFin.Type.1.fact (BsmtFin.Type.1.num )
-# ~~ Neighborhood.fact
-# Year.Built - convex
-# Year.Remod.Add
-# Garage.Yr.Blt
-# Garage.Cars
-# TotRms.AbvGrd
-# df$X1st.Flr.SF + df$X2nd.Flr.SF
-
-df$TwoFloorArea <- df$X1st.Flr.SF + df$X2nd.Flr.SF
-chck_sp(df$TwoFloorArea, "Area of two floors")
+# We have seen a pattern of association between y and x variables.
+# Now we have an idea what variables to include into our regression
 
 selected_var_df <- data.frame("SalePrice" = df$SalePrice, "TotalArea" = df$TotalArea, 
                               "Lot.Area" = df$Lot.Area, "HasFireplace" = df$HasFireplace, 
                               "Garage.Area" = df$Garage.Area, "Total.Bsmt.SF" = df$Total.Bsmt.SF, 
-                              "Liv.Area" = df$Gr.Liv.Area, "Bsmt.Qual" = df$Bsmt.Qual.num, 
+                              "Gr.Liv.Area" = df$Gr.Liv.Area, "Bsmt.Qual" = df$Bsmt.Qual.num, 
                               "MS.Zoning" = df$MS.Zoning.num, "Overall.Qual" = df$Overall.Qual.num, 
                               "BsmtFin.Type.1" = df$BsmtFin.Type.1.num, "Year.Built" = df$Year.Built, 
                               "Year.Remod.Add" = df$Year.Remod.Add, "Garage.Yr.Blt" = df$Garage.Yr.Blt, 
-                              "Garage.Cars" = df$Garage.Cars, "TotRms.AbvGrd" = df$TotRms.AbvGrd, "TwoFloorArea" = df$TwoFloorArea) 
+                              "Garage.Cars" = df$Garage.Cars, "TotRms.AbvGrd" = df$TotRms.AbvGrd) 
 
-# Now we have an idea how to include these variables into our regression
 
 corTable <- cor(selected_var_df, use = "complete.obs")
 
@@ -265,24 +247,169 @@ pair_names <- expand.grid( variable.names(selected_var_df) , variable.names(sele
 high_corr <- pair_names[ id_cr , ]
 high_corr <- mutate( high_corr , corr_val = corTable[ id_cr ] )
 
-# highly correlated - confounder (leads to multicollinearity)
+# highly correlated - confounder (leads to multicollinearity )
 high_corr
 
+# These variables are highly correlated with each other, we don't include them in our model
+# because we may face multicollinearity  issue
 
-SalePrice: Lot.Area, HasFireplace, Garage.Area, Total.Bsmt.SF, 
-Liv.Area, Bsmt.Qual, MS.Zoning, BsmtFin.Type.1, Year.Built, 
-Year.Remod.Add, Garage.Yr.Blt, Garage.Cars,  TotRms.AbvGrd, TwoFloorArea,
+# 1      TotalArea     SalePrice 0.8306139
+# 2   Overall.Qual     SalePrice 0.8013891
+# 3      SalePrice     TotalArea 0.8306139
+# 4  Total.Bsmt.SF     TotalArea 0.8064269
+# 5    Gr.Liv.Area     TotalArea 0.8586815
+# 6    Garage.Cars   Garage.Area 0.8483277
+# 7      TotalArea Total.Bsmt.SF 0.8064269
+# 8      TotalArea   Gr.Liv.Area 0.8586815
+# 9  TotRms.AbvGrd   Gr.Liv.Area 0.8074845
+# 10     SalePrice  Overall.Qual 0.8013891
+# 11 Garage.Yr.Blt    Year.Built 0.8344967
+# 12    Year.Built Garage.Yr.Blt 0.8344967
+# 13   Garage.Area   Garage.Cars 0.8483277
+# 14   Gr.Liv.Area TotRms.AbvGrd 0.8074845
 
-SalePrice = 7851 + 1.72 Lot Area + 41.2 Total Bsmt SF + 40.8 Gr Liv Area
-+ 20952 Garage Cars + 8379 FireYN
 
-reg1 <- lm_robust(SalePrice ~ TotalArea, data = df)
+# Variables with low correlation: 
+#' SalePrice: Lot.Area, HasFireplace, Garage.Area, Total.Bsmt.SF, 
+#' Gr.Liv.Area, Bsmt.Qual, MS.Zoning, BsmtFin.Type.1, Year.Built, 
+#' Year.Remod.Add, Garage.Yr.Blt, Garage.Cars,  TotRms.AbvGrd, TwoFloorArea,
+
+# Think about interactions:
+# How to do interaction of Gr.Liv.Area and HasFireplace
+#     1) The parameter of interest does not include interaction.
+#     2) strong reason for controlling for such interaction: 
+#       fireplace building requires additional expenditure that leads to higher house price
+#
+
+#####
+# 6) Modelling
+#
+# Start from simple to complicated
+# Remember: few hundreds obs, 5-10 variable could work
+#
+# Main regression: saleprice = b0 + b1*Gr.Liv.Area
+#   reg1: NO controls, simple linear
+#   reg11: SalePrice ~ Lot.Area + HasFireplace
+#   reg2: Weighted linear regression, using rooms as weights.
+#   reg23: SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area
+
+# reg3:  SalePrice ~ Gr.Liv.Area + HasFireplace
+# reg31: SalePrice ~ Gr.Liv.Area + HasFireplace + Gr.Liv.Area * HasFireplace,
+# reg32: SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area + HasFireplace + Gr.Liv.Area * HasFireplace
+# reg4: SalePrice ~ Lot.Area + Total.Bsmt.SF + Gr.Liv.Area + Garage.Cars + HasFireplace
+
+
+
+
+reg1 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df)
 summary(reg1)
+# R2 = 51
 
 
-# The most obvious simple regression
-model is to predict sales price based on above ground living space (GR LIVE AREA) or total
-square footage (TOTAL BSMT SF + GR LIV AREA).
+reg11 <- lm_robust(SalePrice ~ Lot.Area + HasFireplace, data = df)
+summary( reg11 )
+# R2 = 0.27
+
+reg12 <- lm_robust(SalePrice ~ TotalArea, data = df)
+summary(reg12)
+# R2 = 68
+# We dont take this model as TotalArea is higly correlated to SalePrice -->
+# multicollinearity issue
+
+reg13 <- lm_robust(SalePrice ~ Garage.Area, data = df)
+summary(reg13)
+# R2 = 42
+
+reg14 <- lm_robust(SalePrice ~ Total.Bsmt.SF, data = df)
+summary(reg14)
+# R2 = 43
+
+reg15 <- lm_robust(SalePrice ~ Bsmt.Qual.num, data = df)
+summary(reg15)
+# R2 = 37
+
+reg16 <- lm_robust(SalePrice ~ MS.Zoning.num, data = df)
+summary(reg16)
+# R2 = 0.01
+
+reg17 <- lm_robust(SalePrice ~ BsmtFin.Type.1.num, data = df)
+summary(reg17)
+# R2 = 0.11
+
+reg18 <- lm_robust(SalePrice ~ Year.Built, data = df)
+summary(reg18)
+# R2 = 0.31
+
+reg19 <- lm_robust(SalePrice ~ Year.Remod.Add, data = df)
+summary(reg19)
+# R2 = 0.29
+
+reg20 <- lm_robust(SalePrice ~ Garage.Yr.Blt, data = df)
+summary(reg20)
+# R2 = 0.28
+
+reg21 <- lm_robust(SalePrice ~ Garage.Cars, data = df)
+summary(reg21)
+# R2 = 0.42
+
+reg22 <- lm_robust(SalePrice ~ TotRms.AbvGrd, data = df)
+summary(reg22)
+# R2 = 0.24
+
+reg23 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, data = df)
+summary(reg23)
+# R2 = 0.68
+
+# Intercept (Beta0): -36647. Does not have meaningful interpretation
+# Total.Bsmt.SF (Beta1): 82.30. On average, SalePrice is 82.30 dollars higher in the data for houses with one square feet larger Total Basement Area but with the same Above Ground Living Area.
+# Gr.Liv.Area (Beta2): 87.63. On average, SalePrice is 87.63 dollars higher in the data for houses with one square feet larger Above Ground Living Area but with the same Total Basement Area.
+
+# since SalePrice - TotalArea plot had a curvature, 
+# I tried to make quadratic model as well
+reg24 <- lm_robust(SalePrice ~ TotalArea + TotalArea^2 , data = df )
+summary( reg24 )
+# R2 = 0.68, same as previous
+
+# log - log Price - Lot Area. linear spline
+reg25 <- lm_robust(log(SalePrice) ~ lspline(log(Lot.Area),c(8,10)), data = df)
+summary(reg25)
+# R2 = 0.14
+
+#' Finished simple regression (without control) with all selected variables.
+#' time to do regression with controls
+
+
+# model: Weighted linear regression, using rooms as weights.
+reg2 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df , weights = TotRms.AbvGrd)
+summary( reg2)
+# R2 = 0.49
+
+
+reg3 <- lm_robust( SalePrice ~ Gr.Liv.Area + HasFireplace, data = df )
+summary( reg3 )
+# R2 = 55
+
+# interaction of HasFireplace dummy variable
+reg31 <- lm_robust(SalePrice ~ Gr.Liv.Area + HasFireplace + 
+                     Gr.Liv.Area * HasFireplace, data = df)
+summary( reg31 )
+# R2 = 57
+
+
+reg32 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area + HasFireplace + 
+                     Gr.Liv.Area * HasFireplace, data = df)
+summary(reg32)
+# R2 = 0.71
+
+reg4 <- lm_robust(SalePrice ~ Lot.Area + Total.Bsmt.SF + 
+                    Gr.Liv.Area + Garage.Cars + HasFireplace, data = df)
+summary(reg4)
+# R2 = 74
+
+##
+# Summarize our findings:
+data_out <- ""
+
 
 
 
@@ -333,6 +460,3 @@ num_data <- select_if(df, is.numeric)
 # Gr Liv Area (Continuous): Above grade (ground) living area square feet
 
 # df$Yr.Sold --> 2006 - 2010
-
-
-qplot(log(df$SalePrice), geom= "histogram") 
