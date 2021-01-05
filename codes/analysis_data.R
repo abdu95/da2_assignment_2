@@ -302,7 +302,6 @@ high_corr
 # 6) Modelling
 #
 # Start from simple to complicated
-# Remember: few hundreds obs, 5-10 variable could work
 #
 # Main regression: saleprice = b0 + b1*Gr.Liv.Area
 #   reg1: NO controls, simple linear
@@ -314,8 +313,6 @@ high_corr
 # reg31: SalePrice ~ Gr.Liv.Area + HasFireplace + Gr.Liv.Area * HasFireplace,
 # reg32: SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area + HasFireplace + Gr.Liv.Area * HasFireplace
 # reg4: SalePrice ~ Lot.Area + Total.Bsmt.SF + Gr.Liv.Area + Garage.Cars + HasFireplace
-
-
 
 
 reg1 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df)

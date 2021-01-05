@@ -135,11 +135,10 @@ The scatterplots that shows the pattern of association between *y variable* (Sal
 After we saw which kind of relationship the variables have, now we have an idea on how build a regression model and what variables to include into our model. 
  
 
-#Comparing explanatory variables
+# Comparing explanatory variables
 
 We selected x variables that has shown strong association with y variables. Total Area, Above Ground Area, Garage Area are among them. Now we explore how these x-s are related to each other. 
 
-The table shows the selected x variables and shows correlation between them.
 
 ```{r,echo=F, message=FALSE, warning=FALSE}
 
@@ -156,6 +155,10 @@ selected_var_df <- data.frame("SalePrice" = df$SalePrice, "TotalArea" = df$Total
 # see correlation 
 corTable <- round(cor(selected_var_df, use = "complete.obs"), digits = 2)
 ```
+
+
+Table 1 shows the selected x variables and shows correlation between them.
+
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 kable(corTable, caption = "Correlation table") %>%
@@ -177,9 +180,37 @@ high_corr <- pair_names[ id_cr , ]
 high_corr <- mutate( high_corr , corr_val = corTable[ id_cr ] )
 
 # highly correlated - confounder (leads to multicollinearity )
-# high_corr
 # This high_corr should be in Appendix as Table
 ```
+
+
+From the correlation table, we retained the variables that has correlation less than 0.8 and removed others. The reason for this is that  highly correlated variables may be confounders that leads us to multicollinearity issue (high Standard Error). Table 2 shows highly correlated variables.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+kable(high_corr, caption = "Variables with high correlation") 
+```
+
+The following variables showed correlation less than 0.8, therefore I decided to retain them for further analysis and include in regression model: 
+
+*SalePrice*: Lot.Area, HasFireplace, Garage.Area, Total.Bsmt.SF, Gr.Liv.Area, Bsmt.Qual, MS.Zoning, BsmtFin.Type.1, Year.Built, Year.Remod.Add, Garage.Yr.Blt, Garage.Cars,  TotRms.AbvGrd
+
+I also decided to include HasFireplace variable (as a dummy variable, 1 if house has one or more fireplaces, 0 otherwise). I want to interact HasFireplace variable with Gr.Liv.Area variable (Above ground area). The reason for controlling for such interaction is that building a fireplace in the house requires additional expenditure from the owners. Therefore, owners may tend to increase house price because of the fireplace.
+
+
+# Model choice
+
+I decided to build several regression models in order to see how they perform and pick up the best one later. 
+
+
+First regression model is:
+
+**SalePrice** = Beta0 + Beta1 * **Gr.Liv.Area**
+
+R^2 = 51
+
+
+Earlier, we have seen strong linear relationship between these variables. Even though the model fits the data pretty well, it has low R^2.
+
 
 # Residual Analysis
 
