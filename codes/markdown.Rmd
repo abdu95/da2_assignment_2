@@ -263,7 +263,7 @@ as_hux(model_summ3)
 
 I tried to build regression model with other variables as well. These models were placed in Appendix and were not used because of low fitness (low R^2) and/or less (or not) meaningful interpretation.
 
-Among all the models, second model was chosen for prediction of house price because it fits better than other models (high R^2, 0.68) and has meaningful interpretation. 
+Among all the models, second model was chosen for prediction of house price because it fits better than other models (high R^2, 0.68), p value of variables is significant (p < 0.05) and has meaningful interpretation. 
 
 **SalePrice** =  Beta0 + Beta1 * **Basement Area** + Beta2 * **Above Ground Area**
 
@@ -277,6 +277,59 @@ From the model summary statistics table we can see the coefficients for this mod
 *Gr.Liv.Area (Beta2)*: 87.63. On average, *SalePrice* is 87.63 dollars higher in the data for houses with one square feet larger *Above Ground Living Area * but with the same *Total Basement Area*.
 
 
+# Prediction
+
+Using the regression model that was selected in previous section, I tried to predict the house price. Figure 3  shows *Predicted sale prices* in x axis and *Actual sale prices* in y axis.
+
+
+```{r, message = F, warning = F, echo = F, fig.cap = "Actual and predicted house prices"}
+# size=1, fig.height= 3, fig.align='center',
+# fig.width=7, fig.height=3, 
+
+# y_hat-y plot - use reg23
+# Predict is more general and can handle missing values...
+df <- mutate( df , y_hat = predict( reg23 , df ) )
+
+#y_hat-y plot
+ggplot( data = df ) +
+  geom_point (aes( x = y_hat , y = SalePrice ) ,  color="red")+
+  geom_line( aes( x = SalePrice , y = SalePrice ) , color = "navyblue" , size = 1.5 )+
+  labs( x = "Predicted sale prices", y = "Actual sale prices")
+
+```
+
+Earlier, we have seen this regression model: 
+
+Regression 3.1
+
+**SalePrice** =  Beta0 + Beta1 * **Above Ground Area** + Beta2 * **HasFireplace** + 
+                     Beta3 * **Above Ground Area** * **HasFireplace**
+                     
+To understand whether fireplace interaction increases the prediction, I compared two models: model with *Above Ground Area* variable (reg23_lm) and the model where *Above Ground Area* (reg31_lm) is interacted with *HasFireplace* variable. 
+
+To compare the prediction results of two models, I used BIC (Bayesian information criterion) and AIC (Akaike information criterion). A lower BIC means that a model is considered to be more likely to be the true model. Model with a lower AIC score will be the better-fit model.
+
+
+Regression model without interaction has shown lower BIC and AIC. Therefore, we decided to choose this model.
+
+
+```{r, message = F, warning = F, echo = F, size=1, fig.align='center'}
+# fig.height= 3, fig.width=3, 
+reg23_lm <- lm(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, 
+               data = subset(df,complete.cases(df)))
+
+reg31_lm <- lm(SalePrice ~ Gr.Liv.Area + HasFireplace + 
+                 Gr.Liv.Area * HasFireplace, data = subset(df,complete.cases(df)))
+
+# kable(BIC(reg23_lm, reg31_lm), caption = "Comparing models, BIC")
+# kable(AIC(reg23_lm, reg31_lm), caption = "Comparing models, AIC")
+
+t_BIC <- BIC(reg23_lm, reg31_lm)
+t_AIC <- AIC(reg23_lm, reg31_lm)
+knitr::kable(list(t_BIC, t_AIC))
+
+          
+```
 
 
 

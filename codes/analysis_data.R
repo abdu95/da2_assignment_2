@@ -469,7 +469,7 @@ AIC(reg23_lm, reg31_lm)
 
 
 # a varibale is significant
-# # p value of variable is significant (p < 0.05), 
+# p value of variable is significant (p < 0.05), 
 # Our first model include all variables, in which we check the p value of all variables and eliminate one with p value larger pre-set significant level(5%).
 
 
