@@ -286,7 +286,7 @@ Using the regression model that was selected in previous section, I tried to pre
 
 ```{r, message = F, warning = F, echo = F, fig.cap = "Actual and predicted house prices"}
 # size=1, fig.height= 3, fig.align='center',
-# fig.width=7, fig.height=3, 
+#  
 
 # y_hat-y plot - use reg23
 # Predict is more general and can handle missing values...
@@ -419,7 +419,7 @@ SummStats %>% relocate(Name) %>%  as_hux() %>% set_caption('Summary Statistics o
 
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of Above Ground Area of a house"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Histogram of Above Ground Area of a house"}
 
 # Above ground living area 
 ggplot(df, aes(x = Gr.Liv.Area)) +
@@ -427,14 +427,14 @@ ggplot(df, aes(x = Gr.Liv.Area)) +
   labs(x = "Above Ground Area of a house")
 ```
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of houses with and without fireplace"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Histogram of houses with and without fireplace"}
 ggplot(df, aes(x = HasFireplace)) +
   geom_histogram(fill='navyblue') +
   labs(x = "Fireplaces")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of houses with 0, 1, 2, 3 and 4 fireplaces"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Histogram of houses with 0, 1, 2, 3 and 4 fireplaces"}
 
 # Fireplaces
 ggplot(df, aes(x = Fireplaces)) +
@@ -445,7 +445,7 @@ ggplot(df, aes(x = Fireplaces)) +
 ## Data Cleaning 
 clean_data.R script contains all the steps for data cleaning. Exact number of missing values in certain variables are also given as a comment
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of houses more than 4000 square feet Above Ground Area"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of houses more than 4000 square feet Above Ground Area"}
 df_r <- read.csv('../data/raw/Housing_raw.csv')
 
 # Outliers
@@ -467,7 +467,7 @@ chck_sp(df$Lot.Area, "Lot Area", "Plot of SalePrice and Lot Area", "Plot shows b
 
 Ln(Sale Price) - Ln(Lot Area).  Probably linear spline, with knots at 8 and 10
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Ln(Sale Price) - Ln(Lot Area)."}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Ln(Sale Price) - Ln(Lot Area)."}
 
 ggplot( df , aes(x = log(Lot.Area), y = log(SalePrice))) +
   geom_point() +
@@ -476,22 +476,22 @@ ggplot( df , aes(x = log(Lot.Area), y = log(SalePrice))) +
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Lot Shape"}
-chck_sp(df$Lot.Shape.fact, "General shape of property", "", "The more regular shape house has, the higher the price. But some Irregular houses has same price as Regular houses")
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Lot Shape"}
+chck_sp(df$Lot.Shape.fact, "General shape of property", "", "The more regular shape house has, the higher price. But some Irregular houses has same price as Regular houses")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Fireplace"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Fireplace"}
 chck_sp(df$HasFireplace, "Has Fireplace", "", "Houses with 1 or more fireplaces have higher price")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Garage Area"}
-chck_sp(df$Garage.Area, "Garage Area", "", "Almost positive linear, but some outliers at the end causing the line to curve. Seems Garage Area variable is important")
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Garage Area"}
+chck_sp(df$Garage.Area, "Garage Area", "", "Almost positive linear, some outliers at the end causing the line to curve. Seems Garage Area variable is important")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Basement area"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Basement area"}
 chck_sp(df$Total.Bsmt.SF, "Total square feet of basement area", "", "There is a linear relationship between Sale Price and Total square feet of basement area")
 ```
 
@@ -501,14 +501,14 @@ chck_sp(df$Garage.Cars, "Size of garage in car capacity", "", "On average, house
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Land.Contour"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Land.Contour"}
 chck_sp(df$Land.Contour.fact, "Land Contour", "", "Near Flat/Level	and Hillside houses have higher prices.")
 ```
 
 
 There are 2922 houses with All Public *Utilities*. Since we don't have much observations with different utilities, it was decided not to check the pattern of association and not to include this variable in the model. 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Land Configuration"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Land Configuration"}
 chck_sp(df$Lot.Config.fact, "Lot configuration", "", "Cul-de-sac and Inside lot has higher prices")
 ```
 
@@ -518,7 +518,7 @@ chck_sp(df$Land.Slope.fact, "Slope", "", "Houses with Gentle slope and Moderate 
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Neighborhood"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Neighborhood"}
 ggplot( df , aes(x = Neighborhood.fact, y = SalePrice)) +
   geom_point() +
   geom_smooth(method="loess" , formula = y ~ x )+
@@ -527,12 +527,12 @@ ggplot( df , aes(x = Neighborhood.fact, y = SalePrice)) +
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - House Condition"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - House Condition"}
 chck_sp(df$Condition.1.fact, "Condition 1", "", "Houses with Normal and Adjacent to postive off-site feature conditions have relatively high prices")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Type of building"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Type of building"}
 chck_sp(df$Bldg.Type.fact, "Type of building", "", "Single-family Detached and Townhouse End Unit houses have relatively high prices")
 ```
 
@@ -540,17 +540,17 @@ chck_sp(df$Bldg.Type.fact, "Type of building", "", "Single-family Detached and T
 Most of the houses are One story and Two story. One story and Two story houses have relatively high prices
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Style of house"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Style of house"}
 chck_sp(df$House.Style.fact, "Style of house", "", "Single-family Detached and Townhouse End Unit houses have relatively high prices")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  House rating"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price -  House rating"}
 chck_sp(df$Overall.Qual.fact, "Rating of overall material and finish of the house", "", "Higher rating - higher sale price. But some houses has quality 6 but has same price as quality 2")
 ```
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  House condition "}
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price -  House condition "}
 chck_sp(df$Overall.Cond.fact, "Rating of the overall condition of the house", "", "Most of the houses have Average (5) condition. Average conditioned houses have relatively high prices")
 ```
 
