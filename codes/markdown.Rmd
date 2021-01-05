@@ -97,7 +97,7 @@ ggplot(df, aes(x = SalePrice)) +
 ### Outliers
 
 When outcome variable SALE PRICE and parameter of interest GR LIV AREA (above ground living area square feet) were plotted, there were 5 observations with extreme values. When inspected, it was clear that two of these outliers have more than 5000 square feet area (which is extremely high) but nevertheless priced relatively appropriately. Also, three of them had Partial Sales that likely don’t represent actual
-market values. Therefore, I removed all houses with more than 4000 square feet from the data set to avoid these five unusual observations (Appendix, Figure 4. 
+market values. Therefore, I removed all houses with more than 4000 square feet from the data set to avoid these five unusual observations (Appendix, Figure 7). 
 
 Therefore, re-iterated research question is the following: 
 **Does a house with higher above ground living area (considering it's less than 4000 square feet) have higher price from 2006 - 2010 in Ames (Iowa) ?**
@@ -124,14 +124,14 @@ First, we see the plot of Sale Price and Above Ground Area since it's our main p
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Above Ground Area of houses"}
 
 # Create a general function to check the pattern
-chck_sp <- function(x_var, x_lab){
+chck_sp <- function(x_var, x_lab, title_t, caption_c){
   ggplot( df , aes(x = x_var, y = SalePrice)) +
     geom_point() +
     geom_smooth(method="loess" , formula = y ~ x )+
-    labs(y = "Sale price of houses", x = x_lab) 
+    labs(y = "Sale price of houses", x = x_lab, title = title_t, caption = caption_c) 
 }
 
-chck_sp(df$Gr.Liv.Area, " Above ground living area square feet")  
+chck_sp(df$Gr.Liv.Area, " Above ground living area square feet", "Plot of SalePrice and Above ground living area ", "linear relationship")  
 
 ```
  
@@ -414,8 +414,6 @@ names(SummStats)[10] <- 'Name'
 # SummStats %>% relocate(Name) %>% kable(caption = 'Summary Statistics of Variables ')
 SummStats %>% relocate(Name) %>%  as_hux() %>% set_caption('Summary Statistics of Variables ') 
 
-# model_summ_stat <- export_summs(SummStats)
-# as_hux(model_summ_stat)
 
 ```
 
@@ -449,11 +447,10 @@ clean_data.R script contains all the steps for data cleaning. Exact number of mi
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of houses more than 4000 square feet Above Ground Area"}
 df_r <- read.csv('../data/raw/Housing_raw.csv')
+
 # Outliers
 ggplot(df_r, aes(Gr.Liv.Area, SalePrice)) +
   geom_point()
-
-
 ```
 
 ### Data Type for variables
@@ -462,11 +459,10 @@ An appropriate format was given to categorical (numeric and ordinal) variables. 
 
 ## Pattern of association
 
-Plot shows bunch of dots near 0. Probably the Sale Price and Lot Area variables are not correlated.
 
 
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price and Lot Area"}
-chck_sp(df$Lot.Area, "Lot Area")
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.cap = "Plot of Sale Price and Lot Area"}
+chck_sp(df$Lot.Area, "Lot Area", "Plot of SalePrice and Lot Area", "Plot shows bunch of dots near 0. Probably the Sale Price and Lot Area variables are not correlated." )
 ```
 
 Ln(Sale Price) - Ln(Lot Area).  Probably linear spline, with knots at 8 and 10
@@ -479,97 +475,65 @@ ggplot( df , aes(x = log(Lot.Area), y = log(SalePrice))) +
   labs(y = "Sale price of houses", x = "Lot Area") 
 ```
 
-The more regular shape house has, the higher the price. But some Irregular houses has same price as Regular houses. 
-
-Reg	Regular	
-
-IR1	Slightly irregular
-
-IR2	Moderately Irregular
-
-IR3	Irregular
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Lot Shape"}
-chck_sp(df$Lot.Shape.fact, "General shape of property")
+chck_sp(df$Lot.Shape.fact, "General shape of property", "", "The more regular shape house has, the higher the price. But some Irregular houses has same price as Regular houses")
 ```
 
-
-Houses with 1 or more fireplaces have higher price
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Fireplace"}
-chck_sp(df$HasFireplace, "Has Fireplace")
+chck_sp(df$HasFireplace, "Has Fireplace", "", "Houses with 1 or more fireplaces have higher price")
 ```
 
-
-Almost positive linear, but some outliers at the end causing the line to curve. Seems Garage Area variable is important
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Garage Area"}
-chck_sp(df$Garage.Area, "Garage Area")
+chck_sp(df$Garage.Area, "Garage Area", "", "Almost positive linear, but some outliers at the end causing the line to curve. Seems Garage Area variable is important")
 ```
 
-There is a linear relationship between Sale Price and Total square feet of basement area
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Basement area"}
-chck_sp(df$Total.Bsmt.SF, "Total square feet of basement area")
-```
-
-On average, houses with more garage cars have higher price
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.cap = "Plot of Sale Price - Garage.Cars"}
-chck_sp(df$Garage.Cars, "Size of garage in car capacity")
+chck_sp(df$Total.Bsmt.SF, "Total square feet of basement area", "", "There is a linear relationship between Sale Price and Total square feet of basement area")
 ```
 
 
-Near Flat/Level	and Hillside houses have higher prices.
+```{r, echo = FALSE,message=FALSE, warning=FALSE,  fig.cap = "Plot of Sale Price - Garage.Cars"}
+chck_sp(df$Garage.Cars, "Size of garage in car capacity", "", "On average, houses with more garage cars have higher price")
+```
 
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Land.Contour"}
-chck_sp(df$Land.Contour.fact, "Land Contour")
+chck_sp(df$Land.Contour.fact, "Land Contour", "", "Near Flat/Level	and Hillside houses have higher prices.")
 ```
 
 
 There are 2922 houses with All Public *Utilities*. Since we don't have much observations with different utilities, it was decided not to check the pattern of association and not to include this variable in the model. 
 
-
-
-Cul-de-sac and Inside lot has higher prices
-
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Land Configuration"}
-chck_sp(df$Lot.Config.fact, " Lot configuration")
+chck_sp(df$Lot.Config.fact, "Lot configuration", "", "Cul-de-sac and Inside lot has higher prices")
 ```
-
-
-Houses with *Gentle slope* and *Moderate Slope* have higher prices
 
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=6, fig.height=3, fig.cap = "Plot of Sale Price - Land Slope"}
-chck_sp(df$Land.Slope.fact, "Slope")
+chck_sp(df$Land.Slope.fact, "Slope", "", "Houses with Gentle slope and Moderate Slope have higher prices")
 ```
-
-
-Houses from Northridge, Northridge Heights, and Stone Brook neighborhoods have relatively high prices
 
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Neighborhood"}
 ggplot( df , aes(x = Neighborhood.fact, y = SalePrice)) +
   geom_point() +
   geom_smooth(method="loess" , formula = y ~ x )+
-  labs(y = "Sale price of houses", x = "Neighborhood") + 
+  labs(y = "Sale price of houses", x = "Neighborhood", caption = "Houses from Northridge, Northridge Heights, and Stone Brook neighborhoods have relatively high prices") + 
   theme(axis.text.x = element_text(angle = 90))  
 ```
 
 
-Houses with Normal and "Adjacent to postive off-site feature" conditions have relatively high prices
-
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - House Condition"}
-chck_sp(df$Condition.1.fact, "Condition 1")
+chck_sp(df$Condition.1.fact, "Condition 1", "", "Houses with Normal and Adjacent to postive off-site feature conditions have relatively high prices")
 ```
 
 
-Most of the houses are Single-family Detached. Single-family Detached and Townhouse End Unit houses have relatively high prices
-
-
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Type of building"}
-chck_sp(df$Bldg.Type.fact, "Type of building")
+chck_sp(df$Bldg.Type.fact, "Type of building", "", "Single-family Detached and Townhouse End Unit houses have relatively high prices")
 ```
 
 
@@ -577,54 +541,34 @@ Most of the houses are One story and Two story. One story and Two story houses h
 
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price - Style of house"}
-chck_sp(df$House.Style.fact, "Style of house")
+chck_sp(df$House.Style.fact, "Style of house", "", "Single-family Detached and Townhouse End Unit houses have relatively high prices")
 ```
 
-
-Higher rating - higher sale price. But some houses has quality 6 but has same price as quality 2
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  House rating"}
-chck_sp(df$Overall.Qual.fact, "Rating of overall material and finish of the house")
+chck_sp(df$Overall.Qual.fact, "Rating of overall material and finish of the house", "", "Higher rating - higher sale price. But some houses has quality 6 but has same price as quality 2")
 ```
 
-
-Most of the houses have Average (5) condition. Average conditioned houses have relatively high prices
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  House condition "}
-chck_sp(df$Overall.Cond.fact, "Rating of the overall condition of the house")
+chck_sp(df$Overall.Cond.fact, "Rating of the overall condition of the house", "", "Most of the houses have Average (5) condition. Average conditioned houses have relatively high prices")
 ```
 
 
-The newer the house (the later is the year built) -  the higher the price. But some houses that are built before 1900 were priced realtively high. There is an upward trend
-
-
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  Year Built "}
-chck_sp(df$Year.Built, "Year Built")
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.cap = "Plot of Sale Price -  Year Built "}
+chck_sp(df$Year.Built, "Year Built", "", "The newer the house - the higher the price. But some houses that are built before 1900 were priced realtively high")
 ```
 
 
-
-I also checked the pattern of association between Sale Price and Total Area of a house. TotalArea = Total Basement Area + Above Ground Area
-
-*Total Bsmt SF* - Total square feet of basement area. (basement - below the ground floor)
-
-*Gr Liv Area* - Above ground living area square feet
-
-
-The total square footage model indicates some possible curvature (convex) which could be better interpreted with quadratic variables.
-
-
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  Total Area"}
-chck_sp(df$TotalArea, "Total Area of a house")
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.cap = "Plot of Sale Price -  Total Area"}
+chck_sp(df$TotalArea, "Total Area of a house", "TotalArea = Total Basement Area + Above Ground Area", " This plot indicates some possible curvature (convex) which could be better interpreted with quadratic variables.")
 ```
 
 
-Total basement area and Above ground area with Sale Condition
-
-```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Plot of Sale Price -  Total Area with Sale Condition"}
+```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.cap = "Plot of Sale Price -  Total Area with Sale Condition"}
 ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
   geom_point(aes(color = Sale.Condition.fact, shape = Sale.Condition.fact)) + 
-  labs(x = "Total basement area + Above ground area")
+  labs(x = "Total basement area + Above ground area", caption = "Total basement area and Above ground area with Sale Condition")
 ```
 
 
@@ -640,9 +584,7 @@ R2 = 0.27
 Regression 1.2:
 SalePrice = Beta0 + Beta1 * Total Area
 
-R2 = 68
-
-Even though this model fits the data very well, we dont take this model as TotalArea is higly correlated to SalePrice - multicollinearity issue. 
+R2 = 68. Even though this model fits the data very well, we dont take this model as TotalArea is higly correlated to SalePrice - multicollinearity issue. 
 
 
 Regression 1.3:
@@ -709,7 +651,10 @@ reg21 <- lm_robust(SalePrice ~ Garage.Cars, data = df)
 reg22 <- lm_robust(SalePrice ~ TotRms.AbvGrd, data = df)
 
 
-model_summ <- export_summs(reg11, reg12, reg18, reg21, reg22 )
+model_summ <- export_summs(reg11, reg12, reg18, reg21, reg22,
+                           model.names = c("(1) Regression 1.1", "(2) Regression 1.2",
+                                           "(3) Regression 1.8", "(4) Regression 2.1",
+                                           "(4) Regression 2.2"))
 as_hux(model_summ)
 
 ```
@@ -718,6 +663,7 @@ as_hux(model_summ)
 Since SalePrice - TotalArea plot had a curvature, I tried to make quadratic model as well. 
 
 Regression 2.4
+
 SalePrice = Beta0 + Beta1 * TotalArea + Beta2 * TotalArea^2 
 
 R2 = 0.68 - same as Regression 2.3
@@ -725,6 +671,7 @@ R2 = 0.68 - same as Regression 2.3
 log - log:  ln(Price) - ln(Lot Area) piecewise linear spline
 
 Regression 2.5 
+
 log(SalePrice) = Alpha1 + Beta1 * log(Lot.Area)[if log(Lot.Area) < 8] + 
                 (Alpha2 + Beta2 * log(Lot.Area)) * [if 8 <= log(Lot.Area) <= 10] 
 
@@ -740,11 +687,13 @@ SalePrice = Above Ground Area (weights = Total Rooms Above Ground)
 R2 = 0.49
 
 Regression 3 
+
 SalePrice = Beta0 + Beta1 * Above Ground Area + Beta2 * HasFireplace 
 
 R2 = 55
 
 Regression 4 
+
 SalePrice = Beta0 + Lot.Area + Beta1 * Total Basement Area + 
                     Beta2 * Above Ground Area + Beta3 * Garage Cars + Beta4 * HasFireplace
 
@@ -763,10 +712,9 @@ reg4 <- lm_robust(SalePrice ~ Lot.Area + Total.Bsmt.SF +
                     Gr.Liv.Area + Garage.Cars + HasFireplace, data = df)
 
 
-model_summ2 <- export_summs(reg24, reg25, reg2, reg3, reg4)
+model_summ2 <- export_summs(reg24, reg25, reg2, reg3, reg4,
+                            model.names = c("(1) Regression 2.4", "(2) Regression 2.5",
+                                            "(3) Regression 2", "(4) Regression 3", 
+                                            "(5) Regression 4"))
 as_hux(model_summ2)
 ```
-
-
-
-
