@@ -1,2 +1,6 @@
-rmd and if want an .R with a readme which tells in 1-2 sentence which le does
-what
+
+- clean_data.R file contains code that gets raw data and cleans it
+
+- analysis_data.R file contains code used for analysis
+
+- markdown.Rmd file is the R markdown file that contains text of analysis and code
