@@ -248,7 +248,6 @@ selected_var_df <- data.frame("SalePrice" = df$SalePrice, "TotalArea" = df$Total
                               "Year.Remod.Add" = df$Year.Remod.Add, "Garage.Yr.Blt" = df$Garage.Yr.Blt, 
                               "Garage.Cars" = df$Garage.Cars, "TotRms.AbvGrd" = df$TotRms.AbvGrd) 
 
-
 corTable <- cor(selected_var_df, use = "complete.obs")
 
 # see correlation 
