@@ -39,6 +39,11 @@ library(kableExtra)
 # install.packages("e1071")
 library(e1071)
 library(readr)
+# install.packages("huxtable")
+# install.packages("jtools")
+library(huxtable)
+library(jtools)
+
 ```
 
 
@@ -204,9 +209,27 @@ I decided to build several regression models in order to see how they perform an
 
 First regression model is:
 
-**SalePrice** = Beta0 + Beta1 * **Gr.Liv.Area**
+**SalePrice** = Beta0 + Beta1 * **Above Ground Area**
 
 R^2 = 51
+
+Second model is:
+
+**SalePrice** =  Beta0 + Beta1 * **Basement Area** + Beta2 * **Above Ground Area**
+
+R^2 = 0.68
+
+
+```
+
+reg23 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, data = df)
+summary(reg23)
+# R2 = 0.68
+```
+
+# Intercept (Beta0): -36647. Does not have meaningful interpretation
+# Total.Bsmt.SF (Beta1): 82.30. On average, SalePrice is 82.30 dollars higher in the data for houses with one square feet larger Total Basement Area but with the same Above Ground Living Area.
+# Gr.Liv.Area (Beta2): 87.63. On average, SalePrice is 87.63 dollars higher in the data for houses with one square feet larger Above Ground Living Area but with the same Total Basement Area.
 
 
 Earlier, we have seen strong linear relationship between these variables. Even though the model fits the data pretty well, it has low R^2.
@@ -253,9 +276,18 @@ SummStats <- s_sale_price %>% add_row(s_gr_liv_area) %>% add_row(s_basement_area
   add_column(c('Sale Price','Above Ground Living Area', 'Basement Area', 'Fireplaces',
                'Lot Area', 'Garage Area'))
 names(SummStats)[10] <- 'Name' 
-SummStats %>% relocate(Name) %>% kable(caption = 'Summary Statistics of Variables ')
 
 ```
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+kable(SummStats, caption = 'Summary Statistics of Variables') 
+
+# SummStats %>% relocate(Name) %>% kable(caption = 'Summary Statistics of Variables ')
+
+```
+
+
 
 ```{r, echo = FALSE,message=FALSE, warning=FALSE, fig.width=7, fig.height=3, fig.cap = "Histogram of Above Ground Area of a house"}
 
@@ -463,12 +495,91 @@ ggplot(df, aes(Total.Bsmt.SF + Gr.Liv.Area, SalePrice)) +
   labs(x = "Total basement area + Above ground area")
 ```
 
-## Comparing explanatory variables
 
-Correlation table 
+## Model choice
+
+Regression 1.1:
+
+SalePrice = Beta0 + Beta1 * Lot Area + Beta2 * HasFireplace
+
+R2 = 0.27
 
 
+Regression 1.2:
+SalePrice = Beta0 + Beta1 * Total Area
 
+R2 = 68
+
+Even though this model fits the data very well, we dont take this model as TotalArea is higly correlated to SalePrice - multicollinearity issue. 
+
+
+Regression 1.3:
+SalePrice = Beta0 +  Beta1 * Garage Area
+
+R2 = 42
+
+Regression 1.4:
+SalePrice = Beta0 +  Beta1 * Total square feet of basement area
+
+R2 = 43
+
+Regression 1.5 
+SalePrice = Beta0 +  Beta1 * Basement quality
+
+R2 = 37
+
+
+Regression 1.6 
+SalePrice = Beta0 +  Beta1 * MS.Zoning
+
+R2 = 0.01
+
+Regression 1.7 
+SalePrice = Beta0 +  Beta1 * BsmtFin.Type.1
+
+R2 = 0.11
+
+Regression 1.8 
+SalePrice = Beta0 + Beta1 * Year.Built
+
+R2 = 0.31
+
+Regression 1.9 
+SalePrice = Beta0 + Beta1 * Year.Remod.Add
+
+R2 = 0.29
+
+Regression 2.0 
+SalePrice = Beta0 + Beta1 * Garage.Yr.Blt
+
+R2 = 0.28
+
+Regresssion 2.1 
+SalePrice = Beta0 + Beta1 * Garage.Cars
+
+R2 = 0.42
+
+Regression 2.2 
+SalePrice = Beta0 + Beta1 * TotRms.AbvGrd
+
+R2 = 0.24
+
+```{r, message = F, warning = F, echo = F,size=1, fig.height= 3, fig.align='center'}
+# Model Summary Statistics 
+reg11 <- lm_robust(SalePrice ~ Lot.Area + HasFireplace, data = df)
+
+reg12 <- lm_robust(SalePrice ~ TotalArea, data = df)
+
+reg18 <- lm_robust(SalePrice ~ Year.Built, data = df)
+
+reg21 <- lm_robust(SalePrice ~ Garage.Cars, data = df)
+
+reg22 <- lm_robust(SalePrice ~ TotRms.AbvGrd, data = df)
+
+
+model_summ <- export_summs(reg11, reg12, reg18, reg21, reg22 )
+as_hux(model_summ)
+```
 
 
 

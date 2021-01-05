@@ -498,10 +498,6 @@ df %>% top_n( 5 , reg23_res ) %>%
 # For example, in some countries people may prefer bigger (or smaller) houses, or houses with (or without) fireplaces.
 # 
 
-
-
-
-
 ggplot(df, aes(Gr.Liv.Area, log(SalePrice))) +
   geom_point()
 
@@ -509,43 +505,8 @@ ggplot(df, aes(Total.Bsmt.SF, SalePrice)) +
   geom_point()
 # weird dots at 0
 
-
-
-
 #  Removed 2779 rows containing missing values (geom_point). 
 
 ggplot(data = df, aes(x = MS.Zoning.fact)) + 
   geom_bar(stat="count")
 # most of the houses (more than 2000) are RL - Residential Low Density
-
-sum(is.na(df$Sale.Type.fact))
-
-sum(is.na(df$Total.Bsmt.SF))
-
-missing <- df[is.na(df$Total.Bsmt.SF),]
-
-
-
-
-
-
-# 490 missing values. do I need this variable? if yes, how to handle them?
-sum(is.na(df$Lot.Frontage))
-table(is.na(df$Lot.Frontage))
-
-num_data <- select_if(df, is.numeric)
-
-
-# Total Bsmt SF (Continuous)
-
-# Ordinal variables are example for 1-5 star hotels
-# for exammple Garage Car? No. We have only 1 house with 5 garage cars. 
-# we need more observation for all levels (1-5)
-
-# 1st Flr SF (Continuous): First Floor square feet
-# 2nd Flr SF (Continuous)	: Second floor square feet
-
-# Low Qual Fin SF (Continuous): Low quality finished square feet (all floors)
-# Gr Liv Area (Continuous): Above grade (ground) living area square feet
-
-# df$Yr.Sold --> 2006 - 2010
