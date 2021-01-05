@@ -207,6 +207,30 @@ I also decided to include HasFireplace variable (as a dummy variable, 1 if house
 I decided to build several regression models in order to see how they perform and pick up the best one later. 
 
 
+```{r, message = F, warning = F, echo = F}
+# size=1, fig.height= 3, fig.align='center',
+reg1 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df)
+# R2 = 51
+
+reg23 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, data = df)
+# R2 = 0.68
+
+reg31 <- lm_robust(SalePrice ~ Gr.Liv.Area + HasFireplace + 
+                     Gr.Liv.Area * HasFireplace, data = df)
+# R2 = 57
+
+reg32 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area + HasFireplace + 
+                     Gr.Liv.Area * HasFireplace, data = df)
+# R2 = 0.71
+
+model_summ3 <- export_summs(reg1, reg23, reg31, reg32,
+                            model.names = c("(1) First Model", "(2) Second Model",
+                                            "(3) Third Model", "(4) Fourth Model"))
+model_hux <- as_hux(model_summ3)
+model_hux %>% set_caption("Comparing model statistics")
+```
+
+
 First regression model is:
 
 **SalePrice** = Beta0 + Beta1 * **Above Ground Area**
@@ -238,28 +262,6 @@ Regression 3.2
 
 R2 = 0.71
 
-
-```{r, message = F, warning = F, echo = F,size=1, fig.height= 3, fig.align='center'}
-
-reg1 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df)
-# R2 = 51
-
-reg23 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, data = df)
-# R2 = 0.68
-
-reg31 <- lm_robust(SalePrice ~ Gr.Liv.Area + HasFireplace + 
-                     Gr.Liv.Area * HasFireplace, data = df)
-# R2 = 57
-
-reg32 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area + HasFireplace + 
-                     Gr.Liv.Area * HasFireplace, data = df)
-# R2 = 0.71
-
-model_summ3 <- export_summs(reg1, reg23, reg31, reg32,
-                            model.names = c("(1) First Model", "(2) Second Model",
-                                            "(3) Third Model", "(4) Fourth Model"))
-as_hux(model_summ3)
-```
 
 I tried to build regression model with other variables as well. These models were placed in Appendix and were not used because of low fitness (low R^2) and/or less (or not) meaningful interpretation.
 
@@ -310,7 +312,7 @@ To understand whether fireplace interaction increases the prediction, I compared
 To compare the prediction results of two models, I used BIC (Bayesian information criterion) and AIC (Akaike information criterion). A lower BIC means that a model is considered to be more likely to be the true model. Model with a lower AIC score will be the better-fit model.
 
 
-Regression model without interaction has shown lower BIC and AIC. Therefore, we decided to choose this model.
+In Table 4, regression model without interaction (reg23_lm) has shown lower BIC and AIC. Therefore, we decided to choose this model.
 
 
 ```{r, message = F, warning = F, echo = F, size=1, fig.align='center'}
@@ -321,27 +323,55 @@ reg23_lm <- lm(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area,
 reg31_lm <- lm(SalePrice ~ Gr.Liv.Area + HasFireplace + 
                  Gr.Liv.Area * HasFireplace, data = subset(df,complete.cases(df)))
 
-# kable(BIC(reg23_lm, reg31_lm), caption = "Comparing models, BIC")
-# kable(AIC(reg23_lm, reg31_lm), caption = "Comparing models, AIC")
-
 t_BIC <- BIC(reg23_lm, reg31_lm)
 t_AIC <- AIC(reg23_lm, reg31_lm)
-knitr::kable(list(t_BIC, t_AIC))
 
+BIC_hux <- as_hux(list(t_BIC, t_AIC))
+BIC_hux  %>% set_caption("Checking model fit with BIC and AIC")
           
 ```
 
 
-
 # Residual Analysis
 
-For these 5 countries in table 2(see Appendix), the model overestimated life expectancy, as the actual value is smaller than the predicted value; in another word, these countries have short life span than average. The explanation could be extreme weather(temperature too hot or too cold) or worsened social safety conditions.
+In previous section, we predicted house prices with regression model. However, it was clear that model contained some errors - points that are either above or below the fitted line. In this section, I calculated the errors of the model and found houses with largest negative and positive errors. 
 
-For these 5 countries in table 3(see Appendix), the model underestimated life expectancy, as the actual value is larger than the predicted value; in another word, these countries have longer life span than average. The explanation could be healthy(Mediterranean and Eastern Asian diet) or complete social security administration.
+ 
+```{r, message = F, warning = F, echo = F}
 
-Also, we check the y and y_hat plot(see Appendix) to examine the model fit. We can see that most scatters fall aside the line, indicating a good fit of the model. 
+# y_hat predicted y values from the model
+
+# Calculate the errors of the model
+df$reg23_res <- df$SalePrice - df$y_hat
+
+# Find houses with largest negative errors
+df %>% top_n( -5 , reg23_res ) %>% 
+  select(PID, SalePrice, y_hat, reg23_res) %>% as_hux() %>% set_caption("Top 5 houses with largest negative errors")
+  
+``` 
  
+Table 5 shows Actual house price (SalePrice), Predicted house price (y_hat), and the difference between them (reg23_res). For these 5 houses the model overestimated the house price, as the actual house price is cheaper  than the predicted value; in another word, these houses have lower price than average. This can be explained by the Neighborhood effect (in some Neighborhoods houses may have lower price than in others), year built (older houses may have lower price even though they have high Above Ground Area) or Overall Quality of house (has lower quality rating because of bad Utilities or bad Exterior quality).
+
+
+```{r, message = F, warning = F, echo = F} 
+
+# Find houses with largest positive errors
+df %>% top_n( 5 , reg23_res ) %>% 
+  select(PID, SalePrice, y_hat, reg23_res) %>% as_hux() %>% set_caption("Top 5 houses with largest positive errors")
+```
+
+
+Table 6 shows Actual house price (SalePrice), Predicted house price (y_hat), and the difference between them (reg23_res). For these 5 houses the model underestimated the house price, as the actual house price is more expensive  than the predicted value; in another word, these houses have higher price than average. The reasons mentioned above can be the case for this phenomenon as well. 
+
+Overall, in Figure 3, we checked the y (Actual House Price) and y_hat (Predicted House Price) plot to examine the model fit. We can see that most scatters fall to the regression line, indicating a good fit of the model. 
  
+# Robustness check
+
+The burden for our models are external validity. The data is limited to Ames city, state Iowa from 2006 to 2010, and our prediction model was conducted using sampple data from Ames, Iowa. Applying these models to other regions, like Washington (or other US state), to commercial markets, or to time periods before 2006 or after 2010 may give the idea whether our model estimates are true in population or in generall pattern represented by the data. Additionally, the financial crisis of 2008 may had its effect to our models that made them specific to this time period and location. 
+
+The further work may compare Ames, Iowa to other housing markets or develop a model based off housing data from a larger coverage or at a different country. This difficulty in developing these datasets is consistency in variables across regions. For example, in some countries people may prefer bigger (or smaller) houses, or houses with (or without) fireplaces.
+
+
 # Appendix
 
 ### Variables
@@ -379,9 +409,13 @@ names(SummStats)[10] <- 'Name'
 
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
-kable(SummStats, caption = 'Summary Statistics of Variables') 
+# kable(SummStats, caption = 'Summary Statistics of Variables') 
 
 # SummStats %>% relocate(Name) %>% kable(caption = 'Summary Statistics of Variables ')
+SummStats %>% relocate(Name) %>%  as_hux() %>% set_caption('Summary Statistics of Variables ') 
+
+# model_summ_stat <- export_summs(SummStats)
+# as_hux(model_summ_stat)
 
 ```
 
@@ -677,6 +711,7 @@ reg22 <- lm_robust(SalePrice ~ TotRms.AbvGrd, data = df)
 
 model_summ <- export_summs(reg11, reg12, reg18, reg21, reg22 )
 as_hux(model_summ)
+
 ```
 
 
