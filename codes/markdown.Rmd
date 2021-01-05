@@ -191,7 +191,7 @@ high_corr <- mutate( high_corr , corr_val = corTable[ id_cr ] )
 
 From the correlation table, we retained the variables that has correlation less than 0.8 and removed others. The reason for this is that  highly correlated variables may be confounders that leads us to multicollinearity issue (high Standard Error). Table 2 shows highly correlated variables.
 
-```{r, echo = FALSE, warning = FALSE, message = FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.align='center'}
 kable(high_corr, caption = "Variables with high correlation") 
 ```
 
@@ -213,26 +213,71 @@ First regression model is:
 
 R^2 = 51
 
+Earlier, we have seen strong linear relationship between these variables. Even though the model fits the data pretty well, it has low R^2.
+
+
 Second model is:
 
 **SalePrice** =  Beta0 + Beta1 * **Basement Area** + Beta2 * **Above Ground Area**
 
 R^2 = 0.68
 
+Third model is the interaction of HasFireplace dummy variable with Above Ground Area:
 
-```
+Regression 3.1
+
+**SalePrice** =  Beta0 + Beta1 * **Above Ground Area** + Beta2 * **HasFireplace** + 
+                     Beta3 * **Above Ground Area** * **HasFireplace**
+R2 = 57
+
+Fourth model is:
+
+Regression 3.2 
+
+**SalePrice** = Beta0 + Beta1 * **Total Basement Area** +  Beta2 * **Above Ground Area** + Beta3 * **HasFireplace**                     + Beta3 * **Above Ground Area** * **HasFireplace**
+
+R2 = 0.71
+
+
+```{r, message = F, warning = F, echo = F,size=1, fig.height= 3, fig.align='center'}
+
+reg1 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df)
+# R2 = 51
 
 reg23 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area, data = df)
-summary(reg23)
 # R2 = 0.68
+
+reg31 <- lm_robust(SalePrice ~ Gr.Liv.Area + HasFireplace + 
+                     Gr.Liv.Area * HasFireplace, data = df)
+# R2 = 57
+
+reg32 <- lm_robust(SalePrice ~ Total.Bsmt.SF + Gr.Liv.Area + HasFireplace + 
+                     Gr.Liv.Area * HasFireplace, data = df)
+# R2 = 0.71
+
+model_summ3 <- export_summs(reg1, reg23, reg31, reg32,
+                            model.names = c("(1) First Model", "(2) Second Model",
+                                            "(3) Third Model", "(4) Fourth Model"))
+as_hux(model_summ3)
 ```
 
-# Intercept (Beta0): -36647. Does not have meaningful interpretation
-# Total.Bsmt.SF (Beta1): 82.30. On average, SalePrice is 82.30 dollars higher in the data for houses with one square feet larger Total Basement Area but with the same Above Ground Living Area.
-# Gr.Liv.Area (Beta2): 87.63. On average, SalePrice is 87.63 dollars higher in the data for houses with one square feet larger Above Ground Living Area but with the same Total Basement Area.
+I tried to build regression model with other variables as well. These models were placed in Appendix and were not used because of low fitness (low R^2) and/or less (or not) meaningful interpretation.
+
+Among all the models, second model was chosen for prediction of house price because it fits better than other models (high R^2, 0.68) and has meaningful interpretation. 
+
+**SalePrice** =  Beta0 + Beta1 * **Basement Area** + Beta2 * **Above Ground Area**
 
 
-Earlier, we have seen strong linear relationship between these variables. Even though the model fits the data pretty well, it has low R^2.
+From the model summary statistics table we can see the coefficients for this model. 
+
+*Intercept (Beta0)*: -36647. Does not have meaningful interpretation
+
+*Total.Bsmt.SF (Beta1)*: 82.30. On average, *SalePrice* is 82.30 dollars higher in the data for houses with one square feet larger *Total Basement Area * but with the same *Above Ground Living Area*.
+
+*Gr.Liv.Area (Beta2)*: 87.63. On average, *SalePrice* is 87.63 dollars higher in the data for houses with one square feet larger *Above Ground Living Area * but with the same *Total Basement Area*.
+
+
+
 
 
 # Residual Analysis
@@ -580,6 +625,60 @@ reg22 <- lm_robust(SalePrice ~ TotRms.AbvGrd, data = df)
 model_summ <- export_summs(reg11, reg12, reg18, reg21, reg22 )
 as_hux(model_summ)
 ```
+
+
+Since SalePrice - TotalArea plot had a curvature, I tried to make quadratic model as well. 
+
+Regression 2.4
+SalePrice = Beta0 + Beta1 * TotalArea + Beta2 * TotalArea^2 
+
+R2 = 0.68 - same as Regression 2.3
+
+log - log:  ln(Price) - ln(Lot Area) piecewise linear spline
+
+Regression 2.5 
+log(SalePrice) = Alpha1 + Beta1 * log(Lot.Area)[if log(Lot.Area) < 8] + 
+                (Alpha2 + Beta2 * log(Lot.Area)) * [if 8 <= log(Lot.Area) <= 10] 
+
+R2 = 0.14
+
+
+Model: Weighted linear regression, using rooms as weights.
+
+Regression 2 
+
+SalePrice = Above Ground Area (weights = Total Rooms Above Ground)
+
+R2 = 0.49
+
+Regression 3 
+SalePrice = Beta0 + Beta1 * Above Ground Area + Beta2 * HasFireplace 
+
+R2 = 55
+
+Regression 4 
+SalePrice = Beta0 + Lot.Area + Beta1 * Total Basement Area + 
+                    Beta2 * Above Ground Area + Beta3 * Garage Cars + Beta4 * HasFireplace
+
+R2 = 74
+
+```{r, message = F, warning = F, echo = F,size=1, fig.height= 3, fig.align='center'}
+reg24 <- lm_robust(SalePrice ~ TotalArea + TotalArea^2 , data = df )
+
+reg25 <- lm_robust(log(SalePrice) ~ lspline(log(Lot.Area),c(8,10)), data = df)
+
+reg2 <- lm_robust(SalePrice ~ Gr.Liv.Area, data = df , weights = TotRms.AbvGrd)
+
+reg3 <- lm_robust( SalePrice ~ Gr.Liv.Area + HasFireplace, data = df )
+
+reg4 <- lm_robust(SalePrice ~ Lot.Area + Total.Bsmt.SF + 
+                    Gr.Liv.Area + Garage.Cars + HasFireplace, data = df)
+
+
+model_summ2 <- export_summs(reg24, reg25, reg2, reg3, reg4)
+as_hux(model_summ2)
+```
+
 
 
 
